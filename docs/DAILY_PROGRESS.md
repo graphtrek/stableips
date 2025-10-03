@@ -169,6 +169,85 @@ At the end of each development session, add a new entry with:
 
 ---
 
+## 2025-10-04
+
+### Work Completed
+- ✅ Migrated from PostgreSQL to H2 in-memory database (~30 min)
+  - Updated `application.properties` with H2 configuration
+  - Removed PostgreSQL dependencies
+  - Simplified local development setup
+- ✅ Implemented complete StableIPs wallet MVP with TDD approach (~2 hours)
+  - Created `User` entity with wallet support
+  - Created `Transaction` entity for transfer logging
+  - Implemented `WalletService` with Web3J integration
+  - Implemented `TransferService` for USDC/DAI transfers
+  - Created repositories (UserRepository, TransactionRepository)
+- ✅ Comprehensive test coverage (~1 hour)
+  - Unit tests for WalletService (wallet generation, balance queries)
+  - Unit tests for TransferService (transfer logic, validation)
+  - Repository tests with H2 database
+- ✅ CI/CD improvements (~30 min)
+  - Fixed test output in GitHub Actions
+  - Improved artifact handling
+  - Set proper Spring profile for CI tests
+- ✅ Added data initialization (~15 min)
+  - Created `DataInitializer` component
+  - Auto-creates two default users on startup: `stableips1` and `stableips2`
+  - Each user gets a generated Ethereum wallet
+- ✅ Git workflow (~15 min)
+  - Committed changes to dev branch
+  - Pushed to remote dev branch
+  - Merged dev into master
+  - Pushed master to remote
+
+### Decisions Made
+- **Database Migration**:
+  - Switched from PostgreSQL to H2 for simplicity
+  - H2 runs in-memory, no external database needed
+  - Console enabled at `/h2-console` for debugging
+
+- **Data Initialization Strategy**:
+  - Use `CommandLineRunner` bean for default data
+  - Check if users exist before creating (idempotent)
+  - Create users with wallet addresses and private keys via WalletService
+
+- **User Management**:
+  - Two default demo users for testing transfers
+  - Users automatically get Ethereum wallets on creation
+
+### Blockers/Issues
+- None currently - MVP complete and tests passing
+
+### Next Steps
+1. **Frontend Development**:
+   - Create login page (`login.jte`)
+   - Create wallet dashboard (`wallet/dashboard.jte`) with HTMX
+   - Create transaction status page (`wallet/transaction-status.jte`)
+2. **Controllers**:
+   - `AuthController` - login/logout functionality
+   - `WalletController` - dashboard and balance display
+   - `TransferController` - transfer initiation and status
+3. **HTMX Integration**:
+   - Add HTMX to templates
+   - Implement dynamic balance updates
+   - Implement transfer form with real-time status
+4. **UI/UX**:
+   - Add Bootstrap 5.3.8 styling
+   - Create responsive layouts
+   - Add loading states and error handling
+
+### Hours Spent
+~4.5 hours total:
+- Database migration: 30 min
+- MVP implementation: 2 hours
+- Test coverage: 1 hour
+- CI/CD improvements: 30 min
+- Data initialization: 15 min
+- Git workflow: 15 min
+- Documentation updates: 30 min
+
+---
+
 ## Template for Future Entries
 
 ```markdown
