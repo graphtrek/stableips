@@ -92,6 +92,83 @@ At the end of each development session, add a new entry with:
 
 ---
 
+## 2025-10-03 (Session 2) - Git Workflow & GitHub Setup
+
+### Work Completed
+- ✅ Set up complete git workflow following foundation document
+- ✅ Created `dev` branch with all changes (4 commits)
+- ✅ Fixed test configuration:
+  - Added H2 in-memory database for testing
+  - Created `application-test.properties` with test profile
+  - Tests now pass without PostgreSQL: `./gradlew test` ✅
+- ✅ Created GitHub Actions CI/CD pipeline (`.github/workflows/ci.yml`)
+  - Build and test on push to dev/master
+  - Build and test on PRs to master
+  - Gradle dependency caching
+  - Test results and artifact uploads
+- ✅ Pushed to GitHub repository: https://github.com/graphtrek/stableips
+  - Pushed `dev` branch (4 commits)
+  - Pushed `master` branch (4 commits)
+- ✅ Created comprehensive workflow documentation:
+  - `docs/GIT_WORKFLOW_SETUP.md` - Complete git workflow guide
+  - `SETUP_COMPLETE.md` - Setup summary and PR template
+  - `PUSH_COMPLETE.md` - Push status and next steps
+
+### Decisions Made
+- **Test Strategy**:
+  - Use H2 in-memory database for CI/CD tests
+  - PostgreSQL only for local development/production
+  - Test profile activated with `@ActiveProfiles("test")`
+
+- **CI/CD Configuration**:
+  - GitHub Actions for CI pipeline
+  - Run on push to dev/master and PRs to master
+  - Java 21 with Temurin distribution
+  - Gradle caching for faster builds
+  - Continue on error for code quality (not yet configured)
+
+- **Branch Strategy**:
+  - Both `dev` and `master` pushed with identical content initially
+  - Future development on `dev` branch
+  - PRs from `dev` to `master` for releases
+  - Follow foundation document workflow going forward
+
+### Blockers/Issues
+- ⚠️ GitHub CLI (`gh`) not installed - completed push manually
+- ⚠️ Both branches currently identical (pushed master from dev)
+  - Resolution: This is acceptable for initial setup
+  - Future: Create PRs for dev -> master merges
+- ⚠️ Cannot verify CI status via CLI
+  - Resolution: User must check https://github.com/graphtrek/stableips/actions manually
+
+### Next Steps
+1. **Immediate**: Verify CI pipeline passes on GitHub Actions tab
+2. **Code Setup**:
+   - Add Web3J 4.10.3 dependency to `build.gradle`
+   - Configure Infura API key in `application.properties`
+   - Add HTMX and Bootstrap to frontend
+3. **Domain Layer**:
+   - Create `User` entity (username, walletAddress, privateKey)
+   - Create `Transaction` entity (userId, recipient, amount, txHash, status)
+   - Create repositories (UserRepository, TransactionRepository)
+4. **Service Layer**:
+   - Implement `WalletService` (Web3J integration)
+   - Implement `TransactionService` (transfer logic)
+   - Implement `AuthService` (session management)
+5. **Controller Layer**:
+   - `AuthController` (login/logout)
+   - `WalletController` (dashboard)
+   - `TransferController` (transfer endpoints)
+6. **Frontend**:
+   - `login.jte` template
+   - `wallet/dashboard.jte` with HTMX
+   - `wallet/transaction-status.jte`
+
+### Hours Spent
+~1.5 hours (git workflow, CI/CD setup, GitHub push, documentation)
+
+---
+
 ## Template for Future Entries
 
 ```markdown

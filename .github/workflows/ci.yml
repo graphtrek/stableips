@@ -36,16 +36,18 @@ jobs:
         run: ./gradlew build -x test
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew test --info
         env:
           SPRING_PROFILES_ACTIVE: test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
+        continue-on-error: true
         with:
           name: test-results
           path: build/test-results/test/
+          if-no-files-found: warn
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
