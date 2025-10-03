@@ -2,6 +2,7 @@ package co.grtk.stableips.service;
 
 import co.grtk.stableips.model.User;
 import co.grtk.stableips.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.web3j.crypto.Credentials;
@@ -9,6 +10,9 @@ import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.Keys;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.Transfer;
 import org.web3j.utils.Convert;
 
 import java.math.BigDecimal;
@@ -23,6 +27,12 @@ public class WalletService {
 
     private final UserRepository userRepository;
     private final Web3j web3j;
+
+    @Value("${wallet.funding.private-key:}")
+    private String fundingPrivateKey;
+
+    @Value("${wallet.funding.initial-amount:10}")
+    private BigDecimal initialAmount;
 
     public WalletService(UserRepository userRepository, Web3j web3j) {
         this.userRepository = userRepository;
@@ -67,5 +77,37 @@ public class WalletService {
         ECKeyPair keyPair = ECKeyPair.create(privateKey);
 
         return Credentials.create(keyPair);
+    }
+
+    public String fundWallet(String toAddress, BigDecimal amountInEth) {
+        if (fundingPrivateKey == null || fundingPrivateKey.isEmpty() || fundingPrivateKey.equals("YOUR_PRIVATE_KEY_HERE")) {
+            System.out.println("Funding wallet not configured. Skipping wallet funding for: " + toAddress);
+            return null;
+        }
+
+        try {
+            BigInteger privateKey = new BigInteger(fundingPrivateKey, 16);
+            Credentials fundingCredentials = Credentials.create(ECKeyPair.create(privateKey));
+
+            TransactionReceipt receipt = Transfer.sendFunds(
+                web3j,
+                fundingCredentials,
+                toAddress,
+                amountInEth,
+                Convert.Unit.ETHER
+            ).send();
+
+            System.out.println("Funded wallet " + toAddress + " with " + amountInEth + " ETH. TX: " + receipt.getTransactionHash());
+            return receipt.getTransactionHash();
+        } catch (Exception e) {
+            System.err.println("Failed to fund wallet " + toAddress + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    public User createUserWithWalletAndFunding(String username) {
+        User user = createUserWithWallet(username);
+        fundWallet(user.getWalletAddress(), initialAmount);
+        return user;
     }
 }

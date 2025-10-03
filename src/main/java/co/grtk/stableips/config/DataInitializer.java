@@ -13,15 +13,15 @@ public class DataInitializer {
     CommandLineRunner initDatabase(UserRepository userRepository, WalletService walletService) {
         return args -> {
             if (userRepository.findByUsername("stableips1").isEmpty()) {
-                walletService.createUserWithWallet("stableips1");
-                System.out.println("Default user 'stableips1' created successfully");
+                walletService.createUserWithWalletAndFunding("stableips1");
+                System.out.println("Default user 'stableips1' created successfully with 1 ETH initial funding");
             } else {
                 System.out.println("Default user 'stableips1' already exists");
             }
 
             if (userRepository.findByUsername("stableips2").isEmpty()) {
-                walletService.createUserWithWallet("stableips2");
-                System.out.println("Default user 'stableips2' created successfully");
+                walletService.createUserWithWalletAndFunding("stableips2");
+                System.out.println("Default user 'stableips2' created successfully with 1 ETH initial funding");
             } else {
                 System.out.println("Default user 'stableips2' already exists");
             }
