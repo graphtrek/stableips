@@ -52,12 +52,24 @@ xrp:
     secret: ""
     initial-amount: 10
 
-# Test Token Contracts (deploy using scripts/deploy-test-tokens.sh)
+# Blockchain Configuration
+blockchain:
+  chain-id: 11155111  # Sepolia testnet
+
+# ERC20 Token Contracts
 contract:
+  # Standard USDC/DAI contracts on Sepolia testnet
+  # Note: Sepolia USDC may use 18 decimals instead of the standard 6 decimals
+  usdc:
+    address: ${USDC_CONTRACT_ADDRESS:0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238}
+  dai:
+    address: ${DAI_CONTRACT_ADDRESS:0x3e622317f8C93f7328350cF0B56d9eD4C620C5d6}
+  # Custom test token contracts (deploy using scripts/deploy-test-tokens.sh)
   test-usdc:
     address: ${TEST_USDC_ADDRESS:}
   test-dai:
     address: ${TEST_DAI_ADDRESS:}
+
 # Initial token amounts for new users (in token units, not smallest denomination)
 token:
   funding:
@@ -72,8 +84,4 @@ solana:
     url: https://api.devnet.solana.com
   funding:
     initial-amount: 2
-
-# Blockchain Configuration
-blockchain:
-  chain-id: 11155111
 

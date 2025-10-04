@@ -7,6 +7,8 @@ import org.p2p.solanaj.programs.SystemProgram;
 import org.p2p.solanaj.rpc.Cluster;
 import org.p2p.solanaj.rpc.RpcClient;
 import org.p2p.solanaj.rpc.RpcException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,8 @@ import java.util.Base64;
  */
 @Service
 public class SolanaWalletService {
+
+    private static final Logger log = LoggerFactory.getLogger(SolanaWalletService.class);
 
     private final RpcClient solanaClient;
 
@@ -52,7 +56,7 @@ public class SolanaWalletService {
             byte[] secretKey = account.getSecretKey();
             String privateKey = Base64.getEncoder().encodeToString(secretKey);
 
-            System.out.println("Generated new Solana wallet: " + publicKey);
+            log.info("Generated new Solana wallet: {}", publicKey);
 
             return new SolanaWallet(publicKey, privateKey);
         } catch (Exception e) {
@@ -75,13 +79,13 @@ public class SolanaWalletService {
             // Convert lamports to SOL
             BigDecimal sol = new BigDecimal(lamports).divide(new BigDecimal("1000000000"));
 
-            System.out.println("SOL balance for " + publicKeyString + ": " + sol + " SOL");
+            log.info("SOL balance for {}: {} SOL", publicKeyString, sol);
             return sol;
         } catch (RpcException e) {
-            System.err.println("Failed to get SOL balance for " + publicKeyString + ": " + e.getMessage());
+            log.error("Failed to get SOL balance for {}: {}", publicKeyString, e.getMessage());
             return BigDecimal.ZERO;
         } catch (Exception e) {
-            System.err.println("Error parsing Solana public key: " + e.getMessage());
+            log.error("Error parsing Solana public key: {}", e.getMessage());
             return BigDecimal.ZERO;
         }
     }
@@ -99,31 +103,31 @@ public class SolanaWalletService {
             // Amount in lamports (2 SOL = 2,000,000,000 lamports)
             long amountLamports = initialAmount.multiply(new BigDecimal("1000000000")).longValue();
 
-            System.out.println("Requesting " + initialAmount + " SOL airdrop for " + publicKeyString);
+            log.info("Requesting {} SOL airdrop for {}", initialAmount, publicKeyString);
 
             // Request airdrop using RPC client
             String signature = solanaClient.getApi().requestAirdrop(publicKey, amountLamports);
 
             if (signature != null && !signature.isEmpty()) {
-                System.out.println("SOL airdrop successful. Signature: " + signature);
+                log.info("SOL airdrop successful. Signature: {}", signature);
 
                 // Wait a bit for the airdrop to be processed
                 Thread.sleep(2000);
 
                 return signature;
             } else {
-                System.err.println("Failed to request SOL airdrop - no signature returned");
+                log.error("Failed to request SOL airdrop - no signature returned");
                 return null;
             }
         } catch (RpcException e) {
-            System.err.println("Failed to request SOL airdrop: " + e.getMessage());
+            log.error("Failed to request SOL airdrop: {}", e.getMessage());
             // Devnet faucet can be rate-limited or temporarily unavailable
             return null;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return null;
         } catch (Exception e) {
-            System.err.println("Unexpected error during SOL airdrop: " + e.getMessage());
+            log.error("Unexpected error during SOL airdrop: {}", e.getMessage());
             return null;
         }
     }
@@ -133,7 +137,7 @@ public class SolanaWalletService {
      * This is the main method called during user creation
      */
     public String fundUserWallet(String publicKey) {
-        System.out.println("Funding Solana wallet from devnet faucet: " + publicKey);
+        log.info("Funding Solana wallet from devnet faucet: {}", publicKey);
         return fundWalletFromFaucet(publicKey);
     }
 
@@ -158,8 +162,8 @@ public class SolanaWalletService {
             // Convert SOL to lamports (1 SOL = 1,000,000,000 lamports)
             long lamports = amount.multiply(new BigDecimal("1000000000")).longValue();
 
-            System.out.println("Sending " + amount + " SOL (" + lamports + " lamports) from " +
-                fromAccount.getPublicKey().toBase58() + " to " + toPublicKey);
+            log.info("Sending {} SOL ({} lamports) from {} to {}", amount, lamports,
+                fromAccount.getPublicKey().toBase58(), toPublicKey);
 
             // Create transfer instruction
             Transaction transaction = new Transaction();
@@ -181,12 +185,11 @@ public class SolanaWalletService {
             // Send transaction
             String signature = solanaClient.getApi().sendTransaction(transaction, fromAccount);
 
-            System.out.println("SOL transfer successful. Signature: " + signature);
+            log.info("SOL transfer successful. Signature: {}", signature);
             return signature;
 
         } catch (Exception e) {
-            System.err.println("Failed to send SOL: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Failed to send SOL: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send SOL: " + e.getMessage(), e);
         }
     }

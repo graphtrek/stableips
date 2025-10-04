@@ -1,6 +1,8 @@
 package co.grtk.stableips.service;
 
 import com.google.common.primitives.UnsignedInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.xrpl.xrpl4j.client.XrplClient;
@@ -22,6 +24,8 @@ import java.util.Map;
 
 @Service
 public class XrpWalletService {
+
+    private static final Logger log = LoggerFactory.getLogger(XrpWalletService.class);
 
     private final XrplClient xrplClient;
     private final FaucetClient faucetClient;
@@ -67,10 +71,10 @@ public class XrpWalletService {
         try {
             FundAccountRequest fundRequest = FundAccountRequest.of(Address.of(address));
             faucetClient.fundAccount(fundRequest);
-            System.out.println("Funded XRP wallet from faucet: " + address);
+            log.info("Funded XRP wallet from faucet: {}", address);
             return address;
         } catch (Exception e) {
-            System.err.println("Failed to fund XRP wallet from faucet: " + e.getMessage());
+            log.error("Failed to fund XRP wallet from faucet: {}", e.getMessage());
             return null;
         }
     }
@@ -86,7 +90,7 @@ public class XrpWalletService {
             XrpCurrencyAmount balance = accountInfo.accountData().balance();
             return new BigDecimal(balance.value().toString()).divide(new BigDecimal("1000000"));
         } catch (Exception e) {
-            System.err.println("Failed to get XRP balance for " + address + ": " + e.getMessage());
+            log.error("Failed to get XRP balance for {}: {}", address, e.getMessage());
             return BigDecimal.ZERO;
         }
     }
@@ -134,15 +138,14 @@ public class XrpWalletService {
 
             if (submitResult.engineResult().equals("tesSUCCESS")) {
                 String txHash = submitResult.transactionResult().hash().value();
-                System.out.println("XRP transfer successful: " + txHash);
+                log.info("XRP transfer successful: {}", txHash);
                 return txHash;
             } else {
                 throw new RuntimeException("XRP transfer failed: " + submitResult.engineResult());
             }
 
         } catch (Exception e) {
-            System.err.println("Failed to send XRP: " + e.getMessage());
-            e.printStackTrace();
+            log.error("Failed to send XRP: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to send XRP: " + e.getMessage(), e);
         }
     }
@@ -152,7 +155,7 @@ public class XrpWalletService {
      */
     public String fundUserWallet(String toAddress) {
         if (fundingSecret == null || fundingSecret.isEmpty()) {
-            System.out.println("XRP funding wallet not configured. Using faucet instead.");
+            log.info("XRP funding wallet not configured. Using faucet instead.");
             return fundWalletFromFaucet(toAddress);
         }
 

@@ -15,4 +15,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<Transaction> findByTxHash(String txHash);
 
     List<Transaction> findByUserIdOrderByTimestampDesc(Long userId);
+
+    /**
+     * Find all transactions with a specific status
+     * Used by TransactionMonitoringService to find PENDING transactions
+     */
+    List<Transaction> findByStatus(String status);
+
+    /**
+     * Find transactions by status and network
+     * Useful for monitoring specific blockchain networks
+     */
+    List<Transaction> findByStatusAndNetwork(String status, String network);
 }

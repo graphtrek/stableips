@@ -1,5 +1,7 @@
 package co.grtk.stableips.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.web3j.crypto.Credentials;
@@ -16,6 +18,8 @@ import java.math.BigInteger;
  */
 @Service
 public class TestTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(TestTokenService.class);
 
     private final Web3j web3j;
 
@@ -52,10 +56,10 @@ public class TestTokenService {
 
             // For now, return a placeholder - actual deployment requires compiled contract
             // Users should deploy manually and configure the address
-            System.out.println("TestUSDC deployment requires manual setup");
-            System.out.println("1. Compile contracts/TestToken.sol");
-            System.out.println("2. Deploy to Sepolia with name='Test USDC', symbol='USDC', decimals=6");
-            System.out.println("3. Add contract address to application.properties");
+            log.info("TestUSDC deployment requires manual setup");
+            log.info("1. Compile contracts/TestToken.sol");
+            log.info("2. Deploy to Sepolia with name='Test USDC', symbol='USDC', decimals=6");
+            log.info("3. Add contract address to application.properties");
 
             return null;
         } catch (Exception e) {
@@ -73,10 +77,10 @@ public class TestTokenService {
         }
 
         try {
-            System.out.println("TestDAI deployment requires manual setup");
-            System.out.println("1. Compile contracts/TestToken.sol");
-            System.out.println("2. Deploy to Sepolia with name='Test DAI', symbol='DAI', decimals=18");
-            System.out.println("3. Add contract address to application.properties");
+            log.info("TestDAI deployment requires manual setup");
+            log.info("1. Compile contracts/TestToken.sol");
+            log.info("2. Deploy to Sepolia with name='Test DAI', symbol='DAI', decimals=18");
+            log.info("3. Add contract address to application.properties");
 
             return null;
         } catch (Exception e) {
@@ -90,7 +94,7 @@ public class TestTokenService {
      */
     public String mintUSDC(String toAddress, BigDecimal amount) {
         if (testUsdcAddress == null || testUsdcAddress.isEmpty()) {
-            System.out.println("TestUSDC not deployed - skipping USDC minting");
+            log.info("TestUSDC not deployed - skipping USDC minting");
             return null;
         }
 
@@ -102,12 +106,12 @@ public class TestTokenService {
 
             // TODO: Call mint function on TestToken contract
             // This requires Web3j contract wrapper generation
-            System.out.println("Minting " + amount + " USDC to " + toAddress);
-            System.out.println("Token amount (with decimals): " + tokenAmount);
+            log.info("Minting {} USDC to {}", amount, toAddress);
+            log.info("Token amount (with decimals): {}", tokenAmount);
 
             return "pending_mint"; // Placeholder
         } catch (Exception e) {
-            System.err.println("Failed to mint USDC: " + e.getMessage());
+            log.error("Failed to mint USDC: {}", e.getMessage());
             return null;
         }
     }
@@ -118,7 +122,7 @@ public class TestTokenService {
      */
     public String mintDAI(String toAddress, BigDecimal amount) {
         if (testDaiAddress == null || testDaiAddress.isEmpty()) {
-            System.out.println("TestDAI not deployed - skipping DAI minting");
+            log.info("TestDAI not deployed - skipping DAI minting");
             return null;
         }
 
@@ -129,12 +133,12 @@ public class TestTokenService {
             BigInteger tokenAmount = amount.multiply(new BigDecimal("1000000000000000000")).toBigInteger();
 
             // TODO: Call mint function on TestToken contract
-            System.out.println("Minting " + amount + " DAI to " + toAddress);
-            System.out.println("Token amount (with decimals): " + tokenAmount);
+            log.info("Minting {} DAI to {}", amount, toAddress);
+            log.info("Token amount (with decimals): {}", tokenAmount);
 
             return "pending_mint"; // Placeholder
         } catch (Exception e) {
-            System.err.println("Failed to mint DAI: " + e.getMessage());
+            log.error("Failed to mint DAI: {}", e.getMessage());
             return null;
         }
     }
@@ -143,18 +147,18 @@ public class TestTokenService {
      * Fund a new user with both USDC and DAI
      */
     public void fundUserWithTestTokens(String userAddress) {
-        System.out.println("Funding user " + userAddress + " with test tokens");
+        log.info("Funding user {} with test tokens", userAddress);
 
         // Mint USDC
         String usdcTx = mintUSDC(userAddress, initialUsdcAmount);
         if (usdcTx != null) {
-            System.out.println("USDC mint tx: " + usdcTx);
+            log.info("USDC mint tx: {}", usdcTx);
         }
 
         // Mint DAI
         String daiTx = mintDAI(userAddress, initialDaiAmount);
         if (daiTx != null) {
-            System.out.println("DAI mint tx: " + daiTx);
+            log.info("DAI mint tx: {}", daiTx);
         }
     }
 }

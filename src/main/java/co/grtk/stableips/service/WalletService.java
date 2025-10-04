@@ -2,6 +2,8 @@ package co.grtk.stableips.service;
 
 import co.grtk.stableips.model.User;
 import co.grtk.stableips.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import java.security.NoSuchProviderException;
 @Service
 @Transactional
 public class WalletService {
+
+    private static final Logger log = LoggerFactory.getLogger(WalletService.class);
 
     private final UserRepository userRepository;
     private final Web3j web3j;
@@ -104,7 +108,7 @@ public class WalletService {
 
     public String fundWallet(String toAddress, BigDecimal amountInEth) {
         if (fundingPrivateKey == null || fundingPrivateKey.isEmpty() || fundingPrivateKey.equals("YOUR_PRIVATE_KEY_HERE")) {
-            System.out.println("Funding wallet not configured. Skipping wallet funding for: " + toAddress);
+            log.info("Funding wallet not configured. Skipping wallet funding for: {}", toAddress);
             return null;
         }
 
@@ -120,10 +124,10 @@ public class WalletService {
                 Convert.Unit.ETHER
             ).send();
 
-            System.out.println("Funded wallet " + toAddress + " with " + amountInEth + " ETH. TX: " + receipt.getTransactionHash());
+            log.info("Funded wallet {} with {} ETH. TX: {}", toAddress, amountInEth, receipt.getTransactionHash());
             return receipt.getTransactionHash();
         } catch (Exception e) {
-            System.err.println("Failed to fund wallet " + toAddress + ": " + e.getMessage());
+            log.error("Failed to fund wallet {}: {}", toAddress, e.getMessage());
             return null;
         }
     }
