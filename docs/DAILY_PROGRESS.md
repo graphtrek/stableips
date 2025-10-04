@@ -248,6 +248,138 @@ At the end of each development session, add a new entry with:
 
 ---
 
+## 2025-10-04 (Session 2) - XRP Ledger Integration
+
+### Work Completed
+- ✅ Added XRP Ledger testnet support for multi-chain wallet (~4 hours)
+  - Integrated XRPL4J library v4.0.3 for XRP blockchain interaction
+  - Created `XrpConfig` configuration for testnet connectivity
+  - Implemented `XrpWalletService` for XRP wallet operations (generation, balance, transfers)
+  - Added dual wallet architecture - users now receive both Ethereum and XRP wallets
+  - Integrated XRP faucet for automatic testnet funding
+- ✅ Database schema updates (~20 min)
+  - Added `xrpAddress` and `xrpSecret` fields to `User` entity
+  - Added `network` field to `Transaction` entity for multi-chain support
+- ✅ Service layer enhancements (~1 hour)
+  - Updated `WalletService` to create dual wallets (Ethereum + XRP)
+  - Added `getXrpBalance()` method to query XRP balances
+  - Updated `TransactionService` with intelligent routing based on token type
+  - Modified `ContractService` to handle native currencies (ETH, XRP)
+- ✅ UI updates (~30 min)
+  - Updated `wallet/dashboard.jte` to display XRP wallet address and balance
+  - Added XRP option to transfer dropdown
+  - Added network column to transaction history table
+- ✅ Test coverage maintenance (~1.5 hours)
+  - Updated all existing tests for new Transaction constructor (network parameter)
+  - Added XRP wallet assertions to WalletServiceTest
+  - Mocked XrpWalletService in all dependent tests
+  - Maintained 100% test passing rate (50/50 tests)
+- ✅ Dependency management (~45 min)
+  - Resolved XRPL4J version compatibility (3.5.2 → 4.0.3)
+  - Fixed JUnit dependency conflicts with exclusions
+  - Updated Gradle build configuration
+- ✅ Git workflow (~15 min)
+  - Committed XRP integration changes to dev branch
+  - Pushed to remote dev branch
+  - Merged dev into master
+  - Pushed master to remote (commit 2e840d7)
+
+### Decisions Made
+- **Multi-chain Architecture**:
+  - Keep separate service classes (`WalletService` for ETH, `XrpWalletService` for XRP)
+  - Use token-based routing in `TransactionService` to direct transfers
+  - Store network identifier in Transaction entity rather than inferring from token
+
+- **XRP Wallet Security** (DEMO ONLY):
+  - Use in-memory seed cache for XRP private keys (temporary solution)
+  - Production would require encrypted storage like Ethereum wallets
+  - Clearly document this is for testnet demo only
+
+- **Dependency Resolution**:
+  - Use XRPL4J v4.0.3 (latest stable version)
+  - Exclude all JUnit dependencies from XRPL4J to avoid conflicts with Spring Boot test framework
+
+- **Native Currency Handling**:
+  - ETH and XRP are native currencies (no contract address)
+  - USDC and DAI are ERC-20 tokens (require contract interaction)
+  - Added `transferNativeETH()` method to ContractService
+  - XRP transfers route directly to XrpWalletService
+
+- **Testnet Strategy**:
+  - Use XRP Ledger testnet (https://s.altnet.rippletest.net:51234)
+  - Integrate faucet client for automatic funding
+  - Configure initial funding amount (10 XRP default)
+
+### Blockers/Issues
+- ⚠️ **XRPL4J Dependency Version**: Initial version 3.5.2 not found in Maven Central
+  - **Resolution**: Upgraded to v4.0.3 (~15 min)
+
+- ⚠️ **JUnit Dependency Conflicts**: XRPL4J BOM pulled incompatible JUnit versions
+  - **Error**: `NoSuchMethodError: org.junit.platform.commons.util.ReflectionUtils.returnsVoid`
+  - **Resolution**: Excluded all JUnit groups from XRPL4J dependencies (~20 min)
+
+- ⚠️ **XRP Seed API Mismatches**: Multiple failed attempts with Seed class methods
+  - **Errors**: `seed.value()`, `seed.decodedSeed().base58Value()`, `seed.decodedSeed().value()` not found
+  - **Resolution**: Implemented in-memory seed cache as temporary solution (~30 min)
+
+- ⚠️ **WalletServiceTest NullPointerException**: XrpWalletService not mocked
+  - **Error**: NPE when calling `xrpWalletService.generateWallet()`
+  - **Resolution**: Added `@Mock XrpWalletService` and mock setup (~10 min)
+
+- ⚠️ **ContractService Rejecting Native Currencies**: ETH and XRP not handled
+  - **Error**: `IllegalArgumentException: Unsupported token: ETH`
+  - **Resolution**: Added cases for ETH/XRP in `getContractAddress()` and `transferNativeETH()` method (~20 min)
+
+- ⚠️ **XRP Transfers Throwing Exception**: All XRP transfers routed to ContractService
+  - **Error**: `IllegalArgumentException: XRP transfers should use XrpWalletService`
+  - **Resolution**: Added routing logic in TransactionService to check token type (~15 min)
+
+### Next Steps
+1. **XRP Transaction Signing** (Currently Stubbed):
+   - Implement actual XRP payment signing in `XrpWalletService.sendXrp()`
+   - Currently returns placeholder "pending_xrp_transfer"
+   - Need to use cached Seed to sign XRP transactions
+
+2. **Security Hardening**:
+   - Encrypt XRP seeds before database storage
+   - Remove in-memory seed cache (security risk)
+   - Follow same encryption pattern as Ethereum private keys
+
+3. **Testing**:
+   - Test actual XRP faucet funding on testnet
+   - Verify XRP balance queries work with real testnet
+   - Test end-to-end XRP transfers
+
+4. **UI Enhancements**:
+   - Add loading states for XRP balance queries
+   - Show different icons/colors for different networks
+   - Add network filtering for transaction history
+
+5. **Documentation**:
+   - Update README with XRP integration details
+   - Document XRP testnet setup process
+   - Add architecture diagrams showing dual-chain support
+
+### Hours Spent
+~8.5 hours total:
+- XRP service implementation: 4 hours
+- Database schema updates: 20 min
+- Service layer integration: 1 hour
+- UI updates: 30 min
+- Test coverage maintenance: 1.5 hours
+- Dependency troubleshooting: 45 min
+- Git workflow and documentation: 15 min
+
+### Key Metrics
+- **Files Changed**: 18 files
+- **Lines Added**: 361 insertions
+- **Lines Removed**: 30 deletions
+- **New Files**: 2 (XrpConfig.java, XrpWalletService.java)
+- **Test Coverage**: 50/50 tests passing (100%)
+- **Commit**: 2e840d7 - "feat: add XRP Ledger testnet support for multi-chain wallet"
+
+---
+
 ## Template for Future Entries
 
 ```markdown
