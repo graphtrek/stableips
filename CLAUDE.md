@@ -364,3 +364,31 @@ When ready to upgrade from Java 21 → Java 24:
 2. Update Spring Boot to latest 3.x compatible version
 3. Test thoroughly - especially JTE and JPA compatibility
 4. Update CI/CD to use Java 24
+
+## Specialized Domain Guides
+
+This project includes specialized guides in `/subagents/` that provide comprehensive patterns and best practices for different architectural concerns. **IMPORTANT: Consult the relevant guide before working on tasks in these domains.**
+
+### When to Use Each Guide
+
+| Guide | Use When | Purpose |
+|-------|----------|---------|
+| **blockchain-integration.md** | Working with Web3j, smart contracts, wallet operations, or any blockchain-related code | Ethereum integration patterns, contract interactions, transaction monitoring |
+| **jte-htmx-ui.md** | Creating/modifying JTE templates, implementing HTMX features, or building UI components | Server-side rendering patterns, HTMX integration, template best practices |
+| **spring-service-layer.md** | Implementing services, business logic, validation, or transaction management | Service patterns, dependency injection, transaction boundaries, error handling |
+| **test-coverage.md** | Writing tests, improving coverage, or fixing test failures | Unit/integration testing patterns, MockMvc, Testcontainers, coverage targets |
+| **database-migration.md** | Creating entities, repositories, custom queries, or schema changes | JPA patterns, repository queries, indexing, Flyway migrations |
+
+### Workflow
+
+Before implementing features in any of these domains:
+1. **Read the relevant guide** from `/subagents/`
+2. **Follow the patterns** and examples provided
+3. **Apply best practices** outlined in the guide
+4. **Reference the guide** when asking for help with domain-specific tasks
+
+Example: When adding a new ERC20 token transfer feature:
+- Consult `/subagents/blockchain-integration.md` for Web3j patterns
+- Consult `/subagents/spring-service-layer.md` for service implementation
+- Consult `/subagents/test-coverage.md` for testing the feature
+- Consult `/subagents/database-migration.md` if adding transaction entities
