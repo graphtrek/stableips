@@ -20,6 +20,12 @@ public class User {
     @Column(nullable = false)
     private String privateKey;
 
+    @Column
+    private String xrpAddress;
+
+    @Column
+    private String xrpSecret;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -79,5 +85,21 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getXrpAddress() {
+        return xrpAddress;
+    }
+
+    public void setXrpAddress(String xrpAddress) {
+        this.xrpAddress = xrpAddress;
+    }
+
+    public String getXrpSecret() {
+        return xrpSecret;
+    }
+
+    public void setXrpSecret(String xrpSecret) {
+        this.xrpSecret = xrpSecret;
     }
 }

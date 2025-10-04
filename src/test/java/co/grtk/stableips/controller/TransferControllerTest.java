@@ -52,6 +52,7 @@ class TransferControllerTest {
             recipient,
             amount,
             token,
+            "ETHEREUM",
             "0xTransactionHash123",
             "PENDING"
         );

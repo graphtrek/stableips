@@ -29,6 +29,7 @@ class TransactionRepositoryTest {
             "0xRecipient123",
             new BigDecimal("100.50"),
             "USDC",
+            "ETHEREUM",
             "0xTxHash123",
             "PENDING"
         );
@@ -51,9 +52,9 @@ class TransactionRepositoryTest {
     @Test
     void shouldFindTransactionsByUserId() {
         // Given
-        Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "0xHash2", "PENDING");
-        Transaction tx3 = new Transaction(2L, "0xAddr3", new BigDecimal("50"), "USDC", "0xHash3", "CONFIRMED");
+        Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
+        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction tx3 = new Transaction(2L, "0xAddr3", new BigDecimal("50"), "USDC", "ETHEREUM", "0xHash3", "CONFIRMED");
 
         entityManager.persist(tx1);
         entityManager.persist(tx2);
@@ -72,7 +73,7 @@ class TransactionRepositoryTest {
     @Test
     void shouldFindTransactionByTxHash() {
         // Given
-        Transaction transaction = new Transaction(1L, "0xAddr", BigDecimal.TEN, "USDC", "0xUniqueHash", "PENDING");
+        Transaction transaction = new Transaction(1L, "0xAddr", BigDecimal.TEN, "USDC", "ETHEREUM", "0xUniqueHash", "PENDING");
         entityManager.persist(transaction);
         entityManager.flush();
 
@@ -96,8 +97,8 @@ class TransactionRepositoryTest {
     @Test
     void shouldFindTransactionsByUserIdOrderedByTimestampDesc() {
         // Given
-        Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "0xHash2", "PENDING");
+        Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
+        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
 
         entityManager.persist(tx1);
         entityManager.flush();

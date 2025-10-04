@@ -7,6 +7,7 @@
 @param BigDecimal ethBalance
 @param BigDecimal usdcBalance
 @param BigDecimal daiBalance
+@param BigDecimal xrpBalance
 @param List<Transaction> transactions
 
 <!DOCTYPE html>
@@ -41,14 +42,21 @@
     <h1>StableIPs Wallet</h1>
     <p>Welcome, <strong>${user.getUsername()}</strong>!</p>
 
-    <h2>Your Wallet</h2>
-    <p>Address: ${user.getWalletAddress()}</p>
+    <h2>Your Wallets</h2>
+    <div class="wallet-info">
+        <p><strong>Ethereum:</strong> ${user.getWalletAddress()}</p>
+        <p><strong>XRP Ledger:</strong> ${user.getXrpAddress()}</p>
+    </div>
 
     <h3>Balances</h3>
     <div class="balances">
         <div class="balance-card">
             <h4>ETH</h4>
             <p>${ethBalance} ETH</p>
+        </div>
+        <div class="balance-card">
+            <h4>XRP</h4>
+            <p>${xrpBalance} XRP</p>
         </div>
         <div class="balance-card">
             <h4>USDC</h4>
@@ -71,6 +79,7 @@
 
             <label for="token">Token:</label>
             <select id="token" name="token" required>
+                <option value="XRP">XRP</option>
                 <option value="USDC">USDC</option>
                 <option value="DAI">DAI</option>
             </select>
@@ -86,6 +95,7 @@
         <table>
             <thead>
                 <tr>
+                    <th>Network</th>
                     <th>Token</th>
                     <th>Recipient</th>
                     <th>Amount</th>
@@ -96,6 +106,7 @@
             <tbody>
                 @for(Transaction tx : transactions)
                     <tr>
+                        <td>${tx.getNetwork()}</td>
                         <td>${tx.getToken()}</td>
                         <td>${tx.getRecipient()}</td>
                         <td>${tx.getAmount()}</td>

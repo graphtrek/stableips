@@ -32,6 +32,9 @@ class WalletServiceTest {
     @Mock
     private Web3j web3j;
 
+    @Mock
+    private XrpWalletService xrpWalletService;
+
     @InjectMocks
     private WalletService walletService;
 
@@ -55,6 +58,11 @@ class WalletServiceTest {
     void shouldCreateUserWithWallet() {
         // Given
         String username = "bob";
+
+        when(xrpWalletService.generateWallet()).thenReturn(
+            new XrpWalletService.XrpWallet("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8", "test_secret")
+        );
+
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             user.setId(1L);
@@ -69,6 +77,9 @@ class WalletServiceTest {
         assertThat(user.getWalletAddress()).isNotNull();
         assertThat(user.getWalletAddress()).startsWith("0x");
         assertThat(user.getPrivateKey()).isNotNull();
+        assertThat(user.getXrpAddress()).isNotNull();
+        assertThat(user.getXrpAddress()).startsWith("r");
+        assertThat(user.getXrpSecret()).isNotNull();
         verify(userRepository).save(any(User.class));
     }
 

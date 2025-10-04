@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:github.com)",
-      "Bash(curl -s -I https://github.com/graphtrek/stableips)"
+      "Bash(curl -s -I https://github.com/graphtrek/stableips)",
+      "Bash(curl -s \"https://api.github.com/repos/graphtrek/stableips/actions/runs?per_page=2\")",
+      "Bash(./gradlew test:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)",
+      "WebSearch",
+      "WebFetch(domain:javadoc.io)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(./gradlew:*)"
     ],
     "deny": [],
     "ask": []

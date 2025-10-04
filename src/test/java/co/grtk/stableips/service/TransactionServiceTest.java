@@ -75,8 +75,8 @@ class TransactionServiceTest {
     void shouldGetTransactionsByUserId() {
         // Given
         Long userId = 1L;
-        Transaction tx1 = new Transaction(userId, "0xAddr1", BigDecimal.TEN, "USDC", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(userId, "0xAddr2", BigDecimal.ONE, "DAI", "0xHash2", "PENDING");
+        Transaction tx1 = new Transaction(userId, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
+        Transaction tx2 = new Transaction(userId, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
 
         when(transactionRepository.findByUserIdOrderByTimestampDesc(userId))
             .thenReturn(Arrays.asList(tx2, tx1));
@@ -94,7 +94,7 @@ class TransactionServiceTest {
     void shouldGetTransactionByHash() {
         // Given
         String txHash = "0xHash123";
-        Transaction transaction = new Transaction(1L, "0xRecipient", BigDecimal.TEN, "USDC", txHash, "CONFIRMED");
+        Transaction transaction = new Transaction(1L, "0xRecipient", BigDecimal.TEN, "USDC", "ETHEREUM", txHash, "CONFIRMED");
 
         when(transactionRepository.findByTxHash(txHash)).thenReturn(Optional.of(transaction));
 
@@ -123,7 +123,7 @@ class TransactionServiceTest {
         // Given
         Long txId = 1L;
         String newStatus = "CONFIRMED";
-        Transaction transaction = new Transaction(1L, "0xRecipient", BigDecimal.TEN, "USDC", "0xHash", "PENDING");
+        Transaction transaction = new Transaction(1L, "0xRecipient", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash", "PENDING");
         transaction.setId(txId);
 
         when(transactionRepository.findById(txId)).thenReturn(Optional.of(transaction));

@@ -5,6 +5,7 @@ plugins {
     id 'gg.jte.gradle' version '3.1.16'
 }
 
+
 group = 'co.grtk'
 version = '0.0.1-SNAPSHOT'
 description = 'stableips'
@@ -24,6 +25,16 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'gg.jte:jte-spring-boot-starter-3:3.1.16'
     implementation 'org.web3j:core:4.10.3'
+    implementation('org.xrpl:xrpl4j-core:4.0.3') {
+        exclude group: 'org.junit'
+        exclude group: 'org.junit.jupiter'
+        exclude group: 'org.junit.platform'
+    }
+    implementation('org.xrpl:xrpl4j-client:4.0.3') {
+        exclude group: 'org.junit'
+        exclude group: 'org.junit.jupiter'
+        exclude group: 'org.junit.platform'
+    }
     runtimeOnly 'com.h2database:h2'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

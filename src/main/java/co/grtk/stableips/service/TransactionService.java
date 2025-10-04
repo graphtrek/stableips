@@ -17,27 +17,41 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final WalletService walletService;
     private final ContractService contractService;
+    private final XrpWalletService xrpWalletService;
 
     public TransactionService(
         TransactionRepository transactionRepository,
         WalletService walletService,
-        ContractService contractService
+        ContractService contractService,
+        XrpWalletService xrpWalletService
     ) {
         this.transactionRepository = transactionRepository;
         this.walletService = walletService;
         this.contractService = contractService;
+        this.xrpWalletService = xrpWalletService;
     }
 
     public Transaction initiateTransfer(User user, String recipient, BigDecimal amount, String token) {
-        Credentials credentials = walletService.getUserCredentials(user.getWalletAddress());
+        String txHash;
+        String network;
 
-        String txHash = contractService.transfer(credentials, recipient, amount, token);
+        // Handle XRP transfers separately
+        if ("XRP".equalsIgnoreCase(token)) {
+            txHash = xrpWalletService.sendXrp(user.getXrpAddress(), recipient, amount);
+            network = "XRP";
+        } else {
+            // Handle Ethereum-based transfers (ETH, USDC, DAI)
+            Credentials credentials = walletService.getUserCredentials(user.getWalletAddress());
+            txHash = contractService.transfer(credentials, recipient, amount, token);
+            network = "ETHEREUM";
+        }
 
         Transaction transaction = new Transaction(
             user.getId(),
             recipient,
             amount,
             token,
+            network,
             txHash,
             "PENDING"
         );

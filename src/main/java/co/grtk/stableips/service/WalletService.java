@@ -27,6 +27,7 @@ public class WalletService {
 
     private final UserRepository userRepository;
     private final Web3j web3j;
+    private final XrpWalletService xrpWalletService;
 
     @Value("${wallet.funding.private-key:}")
     private String fundingPrivateKey;
@@ -34,9 +35,10 @@ public class WalletService {
     @Value("${wallet.funding.initial-amount:10}")
     private BigDecimal initialAmount;
 
-    public WalletService(UserRepository userRepository, Web3j web3j) {
+    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService) {
         this.userRepository = userRepository;
         this.web3j = web3j;
+        this.xrpWalletService = xrpWalletService;
     }
 
     public Credentials generateWallet(String username) {
@@ -49,10 +51,16 @@ public class WalletService {
     }
 
     public User createUserWithWallet(String username) {
+        // Generate Ethereum wallet
         Credentials credentials = generateWallet(username);
+
+        // Generate XRP wallet
+        XrpWalletService.XrpWallet xrpWallet = xrpWalletService.generateWallet();
 
         User user = new User(username, credentials.getAddress());
         user.setPrivateKey(credentials.getEcKeyPair().getPrivateKey().toString(16));
+        user.setXrpAddress(xrpWallet.getAddress());
+        user.setXrpSecret(xrpWallet.getSecret());
 
         return userRepository.save(user);
     }
@@ -107,7 +115,17 @@ public class WalletService {
 
     public User createUserWithWalletAndFunding(String username) {
         User user = createUserWithWallet(username);
+
+        // Fund Ethereum wallet
         fundWallet(user.getWalletAddress(), initialAmount);
+
+        // Fund XRP wallet from faucet
+        xrpWalletService.fundUserWallet(user.getXrpAddress());
+
         return user;
+    }
+
+    public BigDecimal getXrpBalance(String xrpAddress) {
+        return xrpWalletService.getBalance(xrpAddress);
     }
 }

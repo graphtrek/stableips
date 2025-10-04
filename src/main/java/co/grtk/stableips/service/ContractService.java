@@ -44,8 +44,20 @@ public class ContractService {
     }
 
     public String transfer(Credentials credentials, String recipient, BigDecimal amount, String token) {
+        // XRP transfers are handled by XrpWalletService, not here
+        if ("XRP".equalsIgnoreCase(token)) {
+            throw new IllegalArgumentException("XRP transfers should use XrpWalletService");
+        }
+
         try {
             String contractAddress = getContractAddress(token);
+
+            // ETH native transfer (no contract interaction)
+            if ("ETH".equalsIgnoreCase(token)) {
+                return transferNativeETH(credentials, recipient, amount);
+            }
+
+            // ERC-20 token transfer
             BigInteger value = convertToTokenUnits(amount); // Assumes 18 decimals for both USDC and DAI
 
             Function function = new Function(
@@ -78,7 +90,44 @@ public class ContractService {
         }
     }
 
+    private String transferNativeETH(Credentials credentials, String recipient, BigDecimal amount) {
+        try {
+            BigInteger value = convertToTokenUnits(amount);
+
+            TransactionManager transactionManager = new RawTransactionManager(
+                web3j, credentials, chainId
+            );
+
+            EthSendTransaction transactionResponse = transactionManager.sendTransaction(
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT,
+                recipient,
+                "",
+                value
+            );
+
+            if (transactionResponse.hasError()) {
+                throw new RuntimeException("ETH transfer failed: " + transactionResponse.getError().getMessage());
+            }
+
+            return transactionResponse.getTransactionHash();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send ETH: " + e.getMessage(), e);
+        }
+    }
+
     public BigDecimal getBalance(String walletAddress, String token) {
+        // XRP balance is handled by XrpWalletService
+        if ("XRP".equalsIgnoreCase(token)) {
+            return BigDecimal.ZERO; // Not handled here
+        }
+
+        // ETH balance is handled by WalletService.getEthBalance()
+        if ("ETH".equalsIgnoreCase(token)) {
+            return BigDecimal.ZERO; // Not handled here
+        }
+
+        // ERC-20 token balance
         try {
             String contractAddress = getContractAddress(token);
 
@@ -115,6 +164,7 @@ public class ContractService {
         return switch (token.toUpperCase()) {
             case "USDC" -> usdcAddress;
             case "DAI" -> daiAddress;
+            case "ETH", "XRP" -> null; // Native currencies don't have contract addresses
             default -> throw new IllegalArgumentException("Unsupported token: " + token);
         };
     }

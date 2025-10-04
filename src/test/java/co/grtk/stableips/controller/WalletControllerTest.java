@@ -52,8 +52,8 @@ class WalletControllerTest {
         BigDecimal usdcBalance = new BigDecimal("500.00");
         BigDecimal daiBalance = new BigDecimal("250.75");
 
-        Transaction tx1 = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xRecipient2", BigDecimal.ONE, "DAI", "0xHash2", "PENDING");
+        Transaction tx1 = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
+        Transaction tx2 = new Transaction(1L, "0xRecipient2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
         List<Transaction> transactions = Arrays.asList(tx1, tx2);
 
         when(authService.isAuthenticated(session)).thenReturn(true);

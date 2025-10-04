@@ -25,6 +25,9 @@ public class Transaction {
     private String token;
 
     @Column(nullable = false)
+    private String network;
+
+    @Column(nullable = false)
     private String txHash;
 
     @Column(nullable = false)
@@ -37,11 +40,12 @@ public class Transaction {
         // JPA requires a no-arg constructor
     }
 
-    public Transaction(Long userId, String recipient, BigDecimal amount, String token, String txHash, String status) {
+    public Transaction(Long userId, String recipient, BigDecimal amount, String token, String network, String txHash, String status) {
         this.userId = userId;
         this.recipient = recipient;
         this.amount = amount;
         this.token = token;
+        this.network = network;
         this.txHash = txHash;
         this.status = status;
         this.timestamp = LocalDateTime.now();
@@ -117,5 +121,13 @@ public class Transaction {
 
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getNetwork() {
+        return network;
+    }
+
+    public void setNetwork(String network) {
+        this.network = network;
     }
 }
