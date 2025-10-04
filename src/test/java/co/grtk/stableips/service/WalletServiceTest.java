@@ -35,9 +35,6 @@ class WalletServiceTest {
     @Mock
     private XrpWalletService xrpWalletService;
 
-    @Mock
-    private TestTokenService testTokenService;
-
     @InjectMocks
     private WalletService walletService;
 
