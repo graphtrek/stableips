@@ -16,7 +16,8 @@
       "WebFetch(domain:javadoc.io)",
       "Bash(find:*)",
       "Bash(cat:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []

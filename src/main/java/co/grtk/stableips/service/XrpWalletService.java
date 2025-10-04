@@ -95,8 +95,56 @@ public class XrpWalletService {
      * Send XRP from one address to another
      */
     public String sendXrp(String fromAddress, String toAddress, BigDecimal amount) {
-        System.out.println("XRP transfer not yet implemented - from: " + fromAddress + " to: " + toAddress + " amount: " + amount);
-        return "pending_xrp_transfer";
+        try {
+            // Get the seed from cache
+            Seed seed = seedCache.get(fromAddress);
+            if (seed == null) {
+                throw new RuntimeException("Seed not found for address: " + fromAddress);
+            }
+
+            // Get account info for sequence number
+            AccountInfoRequestParams accountInfoParams = AccountInfoRequestParams.of(Address.of(fromAddress));
+            AccountInfoResult accountInfo = xrplClient.accountInfo(accountInfoParams);
+            UnsignedInteger sequence = accountInfo.accountData().sequence();
+
+            // Get current network fee
+            FeeResult feeResult = xrplClient.fee();
+            XrpCurrencyAmount openLedgerFee = feeResult.drops().openLedgerFee();
+
+            // Convert amount to drops (1 XRP = 1,000,000 drops)
+            XrpCurrencyAmount xrpAmount = XrpCurrencyAmount.ofDrops(
+                amount.multiply(new BigDecimal("1000000")).longValue()
+            );
+
+            // Build payment transaction
+            Payment payment = Payment.builder()
+                .account(Address.of(fromAddress))
+                .destination(Address.of(toAddress))
+                .amount(xrpAmount)
+                .sequence(sequence)
+                .fee(openLedgerFee)
+                .signingPublicKey(seed.deriveKeyPair().publicKey())
+                .build();
+
+            // Sign the transaction
+            var signedTransaction = signatureService.sign(seed.deriveKeyPair().privateKey(), payment);
+
+            // Submit to the ledger
+            SubmitResult<Payment> submitResult = xrplClient.submit(signedTransaction);
+
+            if (submitResult.engineResult().equals("tesSUCCESS")) {
+                String txHash = submitResult.transactionResult().hash().value();
+                System.out.println("XRP transfer successful: " + txHash);
+                return txHash;
+            } else {
+                throw new RuntimeException("XRP transfer failed: " + submitResult.engineResult());
+            }
+
+        } catch (Exception e) {
+            System.err.println("Failed to send XRP: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send XRP: " + e.getMessage(), e);
+        }
     }
 
     /**
