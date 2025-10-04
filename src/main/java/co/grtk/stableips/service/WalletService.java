@@ -28,6 +28,7 @@ public class WalletService {
     private final UserRepository userRepository;
     private final Web3j web3j;
     private final XrpWalletService xrpWalletService;
+    private final TestTokenService testTokenService;
 
     @Value("${wallet.funding.private-key:}")
     private String fundingPrivateKey;
@@ -35,10 +36,11 @@ public class WalletService {
     @Value("${wallet.funding.initial-amount:10}")
     private BigDecimal initialAmount;
 
-    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService) {
+    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService, TestTokenService testTokenService) {
         this.userRepository = userRepository;
         this.web3j = web3j;
         this.xrpWalletService = xrpWalletService;
+        this.testTokenService = testTokenService;
     }
 
     public Credentials generateWallet(String username) {
@@ -116,8 +118,11 @@ public class WalletService {
     public User createUserWithWalletAndFunding(String username) {
         User user = createUserWithWallet(username);
 
-        // Fund Ethereum wallet
+        // Fund Ethereum wallet with ETH
         fundWallet(user.getWalletAddress(), initialAmount);
+
+        // Fund with test tokens (USDC/DAI)
+        testTokenService.fundUserWithTestTokens(user.getWalletAddress());
 
         // Fund XRP wallet from faucet
         xrpWalletService.fundUserWallet(user.getXrpAddress());
