@@ -26,6 +26,12 @@ public class User {
     @Column
     private String xrpSecret;
 
+    @Column
+    private String solanaPublicKey;
+
+    @Column
+    private String solanaPrivateKey;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -101,5 +107,21 @@ public class User {
 
     public void setXrpSecret(String xrpSecret) {
         this.xrpSecret = xrpSecret;
+    }
+
+    public String getSolanaPublicKey() {
+        return solanaPublicKey;
+    }
+
+    public void setSolanaPublicKey(String solanaPublicKey) {
+        this.solanaPublicKey = solanaPublicKey;
+    }
+
+    public String getSolanaPrivateKey() {
+        return solanaPrivateKey;
+    }
+
+    public void setSolanaPrivateKey(String solanaPrivateKey) {
+        this.solanaPrivateKey = solanaPrivateKey;
     }
 }

@@ -28,6 +28,7 @@ public class WalletService {
     private final UserRepository userRepository;
     private final Web3j web3j;
     private final XrpWalletService xrpWalletService;
+    private final SolanaWalletService solanaWalletService;
 
     @Value("${wallet.funding.private-key:}")
     private String fundingPrivateKey;
@@ -35,10 +36,11 @@ public class WalletService {
     @Value("${wallet.funding.initial-amount:10}")
     private BigDecimal initialAmount;
 
-    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService) {
+    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService, SolanaWalletService solanaWalletService) {
         this.userRepository = userRepository;
         this.web3j = web3j;
         this.xrpWalletService = xrpWalletService;
+        this.solanaWalletService = solanaWalletService;
     }
 
     public Credentials generateWallet(String username) {
@@ -57,10 +59,15 @@ public class WalletService {
         // Generate XRP wallet
         XrpWalletService.XrpWallet xrpWallet = xrpWalletService.generateWallet();
 
+        // Generate Solana wallet
+        SolanaWalletService.SolanaWallet solanaWallet = solanaWalletService.generateWallet();
+
         User user = new User(username, credentials.getAddress());
         user.setPrivateKey(credentials.getEcKeyPair().getPrivateKey().toString(16));
         user.setXrpAddress(xrpWallet.getAddress());
         user.setXrpSecret(xrpWallet.getSecret());
+        user.setSolanaPublicKey(solanaWallet.getPublicKey());
+        user.setSolanaPrivateKey(solanaWallet.getPrivateKey());
 
         return userRepository.save(user);
     }
@@ -122,10 +129,17 @@ public class WalletService {
         // Fund XRP wallet from faucet
         xrpWalletService.fundUserWallet(user.getXrpAddress());
 
+        // Fund Solana wallet from devnet faucet
+        solanaWalletService.fundUserWallet(user.getSolanaPublicKey());
+
         return user;
     }
 
     public BigDecimal getXrpBalance(String xrpAddress) {
         return xrpWalletService.getBalance(xrpAddress);
+    }
+
+    public BigDecimal getSolanaBalance(String publicKey) {
+        return solanaWalletService.getBalance(publicKey);
     }
 }

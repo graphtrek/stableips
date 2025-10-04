@@ -35,6 +35,9 @@ class WalletServiceTest {
     @Mock
     private XrpWalletService xrpWalletService;
 
+    @Mock
+    private SolanaWalletService solanaWalletService;
+
     @InjectMocks
     private WalletService walletService;
 
@@ -63,6 +66,10 @@ class WalletServiceTest {
             new XrpWalletService.XrpWallet("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8", "test_secret")
         );
 
+        when(solanaWalletService.generateWallet()).thenReturn(
+            new SolanaWalletService.SolanaWallet("DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6Z", "test_solana_private_key")
+        );
+
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             user.setId(1L);
@@ -80,6 +87,8 @@ class WalletServiceTest {
         assertThat(user.getXrpAddress()).isNotNull();
         assertThat(user.getXrpAddress()).startsWith("r");
         assertThat(user.getXrpSecret()).isNotNull();
+        assertThat(user.getSolanaPublicKey()).isNotNull();
+        assertThat(user.getSolanaPrivateKey()).isNotNull();
         verify(userRepository).save(any(User.class));
     }
 

@@ -18,29 +18,38 @@ public class TransactionService {
     private final WalletService walletService;
     private final ContractService contractService;
     private final XrpWalletService xrpWalletService;
+    private final SolanaWalletService solanaWalletService;
 
     public TransactionService(
         TransactionRepository transactionRepository,
         WalletService walletService,
         ContractService contractService,
-        XrpWalletService xrpWalletService
+        XrpWalletService xrpWalletService,
+        SolanaWalletService solanaWalletService
     ) {
         this.transactionRepository = transactionRepository;
         this.walletService = walletService;
         this.contractService = contractService;
         this.xrpWalletService = xrpWalletService;
+        this.solanaWalletService = solanaWalletService;
     }
 
     public Transaction initiateTransfer(User user, String recipient, BigDecimal amount, String token) {
         String txHash;
         String network;
 
-        // Handle XRP transfers separately
-        if ("XRP".equalsIgnoreCase(token)) {
+        // Handle SOL transfers
+        if ("SOL".equalsIgnoreCase(token)) {
+            txHash = solanaWalletService.sendSol(user.getSolanaPrivateKey(), recipient, amount);
+            network = "SOLANA";
+        }
+        // Handle XRP transfers
+        else if ("XRP".equalsIgnoreCase(token)) {
             txHash = xrpWalletService.sendXrp(user.getXrpAddress(), recipient, amount);
             network = "XRP";
-        } else {
-            // Handle Ethereum-based transfers (ETH, USDC, DAI)
+        }
+        // Handle Ethereum-based transfers (ETH, USDC, DAI)
+        else {
             Credentials credentials = walletService.getUserCredentials(user.getWalletAddress());
             txHash = contractService.transfer(credentials, recipient, amount, token);
             network = "ETHEREUM";

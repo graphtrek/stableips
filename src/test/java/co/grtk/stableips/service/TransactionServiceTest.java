@@ -33,6 +33,12 @@ class TransactionServiceTest {
     @Mock
     private ContractService contractService;
 
+    @Mock
+    private XrpWalletService xrpWalletService;
+
+    @Mock
+    private SolanaWalletService solanaWalletService;
+
     @InjectMocks
     private TransactionService transactionService;
 

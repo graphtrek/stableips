@@ -8,6 +8,7 @@
 @param BigDecimal usdcBalance
 @param BigDecimal daiBalance
 @param BigDecimal xrpBalance
+@param BigDecimal solBalance
 @param List<Transaction> transactions
 
 <!DOCTYPE html>
@@ -46,6 +47,7 @@
     <div class="wallet-info">
         <p><strong>Ethereum:</strong> ${user.getWalletAddress()}</p>
         <p><strong>XRP Ledger:</strong> ${user.getXrpAddress()}</p>
+        <p><strong>Solana:</strong> ${user.getSolanaPublicKey()}</p>
     </div>
 
     <h3>Balances</h3>
@@ -57,6 +59,10 @@
         <div class="balance-card">
             <h4>XRP</h4>
             <p>${xrpBalance} XRP</p>
+        </div>
+        <div class="balance-card">
+            <h4>SOL</h4>
+            <p>${solBalance} SOL</p>
         </div>
         <div class="balance-card">
             <h4>USDC</h4>
@@ -79,6 +85,7 @@
 
             <label for="token">Token:</label>
             <select id="token" name="token" required>
+                <option value="SOL">SOL (Solana)</option>
                 <option value="XRP">XRP</option>
                 <option value="USDC">USDC</option>
                 <option value="DAI">DAI</option>

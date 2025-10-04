@@ -39,17 +39,20 @@ public class WalletController {
         User user = authService.getCurrentUser(session);
         String walletAddress = user.getWalletAddress();
         String xrpAddress = user.getXrpAddress();
+        String solanaPublicKey = user.getSolanaPublicKey();
 
         BigDecimal ethBalance = walletService.getEthBalance(walletAddress);
         BigDecimal usdcBalance = transactionService.getTokenBalance(walletAddress, "USDC");
         BigDecimal daiBalance = transactionService.getTokenBalance(walletAddress, "DAI");
         BigDecimal xrpBalance = walletService.getXrpBalance(xrpAddress);
+        BigDecimal solBalance = walletService.getSolanaBalance(solanaPublicKey);
 
         model.addAttribute("user", user);
         model.addAttribute("ethBalance", ethBalance);
         model.addAttribute("usdcBalance", usdcBalance);
         model.addAttribute("daiBalance", daiBalance);
         model.addAttribute("xrpBalance", xrpBalance);
+        model.addAttribute("solBalance", solBalance);
         model.addAttribute("transactions", transactionService.getUserTransactions(user.getId()));
 
         return "wallet/dashboard";

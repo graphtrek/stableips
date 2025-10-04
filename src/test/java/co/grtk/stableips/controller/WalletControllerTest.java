@@ -49,10 +49,14 @@ class WalletControllerTest {
 
         User user = new User("alice", "0xWallet123");
         user.setId(1L);
+        user.setXrpAddress("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8");
+        user.setSolanaPublicKey("DYw8jCTfwHNRJhhmFcbXvVDTqWMEVFBX6Z");
 
         BigDecimal ethBalance = new BigDecimal("1.5");
         BigDecimal usdcBalance = new BigDecimal("500.00");
         BigDecimal daiBalance = new BigDecimal("250.75");
+        BigDecimal xrpBalance = new BigDecimal("10.0");
+        BigDecimal solBalance = new BigDecimal("2.0");
 
         Transaction tx1 = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
         Transaction tx2 = new Transaction(1L, "0xRecipient2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
@@ -63,6 +67,8 @@ class WalletControllerTest {
         when(walletService.getEthBalance(anyString())).thenReturn(ethBalance);
         when(transactionService.getTokenBalance(anyString(), org.mockito.ArgumentMatchers.eq("USDC"))).thenReturn(usdcBalance);
         when(transactionService.getTokenBalance(anyString(), org.mockito.ArgumentMatchers.eq("DAI"))).thenReturn(daiBalance);
+        when(walletService.getXrpBalance(anyString())).thenReturn(xrpBalance);
+        when(walletService.getSolanaBalance(anyString())).thenReturn(solBalance);
         when(transactionService.getUserTransactions(1L)).thenReturn(transactions);
 
         // When & Then
@@ -73,6 +79,8 @@ class WalletControllerTest {
             .andExpect(model().attribute("ethBalance", ethBalance))
             .andExpect(model().attribute("usdcBalance", usdcBalance))
             .andExpect(model().attribute("daiBalance", daiBalance))
+            .andExpect(model().attribute("xrpBalance", xrpBalance))
+            .andExpect(model().attribute("solBalance", solBalance))
             .andExpect(model().attribute("transactions", transactions));
     }
 
