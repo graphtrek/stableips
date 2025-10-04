@@ -38,3 +38,11 @@ out/
 
 ### JTE ###
 /jte-classes/
+
+### Node.js (Hardhat deployment scripts) ###
+scripts/node_modules/
+scripts/package-lock.json
+scripts/.package-lock.json
+scripts/deployed-addresses.json
+scripts/cache/
+scripts/artifacts/

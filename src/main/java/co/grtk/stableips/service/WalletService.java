@@ -137,8 +137,7 @@ public class WalletService {
         // Fund XRP wallet from faucet
         xrpWalletService.fundUserWallet(user.getXrpAddress());
 
-        // Fund Solana wallet from devnet faucet
-        solanaWalletService.fundUserWallet(user.getSolanaPublicKey());
+        // Note: Solana funding removed - users can manually fund via https://faucet.solana.com/
 
         return user;
     }
