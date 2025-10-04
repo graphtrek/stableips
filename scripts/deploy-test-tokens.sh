@@ -1,68 +1,71 @@
 #!/bin/bash
 
-# Deploy Test Tokens (USDC and DAI) to Sepolia Testnet
-# This script uses Remix IDE for deployment (simplest approach)
+# Automated Test Token Deployment Script for Sepolia Testnet
+# Uses Hardhat for one-command deployment
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 echo "========================================"
-echo "Test Token Deployment Guide"
+echo "StableIPs Test Token Deployment"
 echo "========================================"
 echo ""
-echo "This script will guide you through deploying TestUSDC and TestDAI to Sepolia testnet."
+
+# Check prerequisites
+if ! command -v npx &> /dev/null; then
+    echo "❌ Error: npx is not installed."
+    echo "Please install Node.js from: https://nodejs.org/"
+    exit 1
+fi
+
+# Check environment variables
+if [ -z "$INFURA_PROJECT_ID" ]; then
+    echo "❌ Error: INFURA_PROJECT_ID is not set."
+    echo "Get your API key from: https://infura.io/"
+    echo "Then run: export INFURA_PROJECT_ID=your_project_id"
+    exit 1
+fi
+
+if [ -z "$FUNDED_SEPOLIA_WALLET_PRIVATE_KEY" ]; then
+    echo "❌ Error: FUNDED_SEPOLIA_WALLET_PRIVATE_KEY is not set."
+    echo "This wallet will be the contract owner and needs Sepolia ETH for gas."
+    echo "Get Sepolia ETH from: https://sepoliafaucet.com/"
+    echo "Then run: export FUNDED_SEPOLIA_WALLET_PRIVATE_KEY=your_private_key"
+    exit 1
+fi
+
+echo "✅ Prerequisites check passed"
+echo "📦 Installing dependencies..."
 echo ""
-echo "OPTION 1: Deploy using Remix IDE (Recommended - No local setup needed)"
-echo "========================================"
+
+# Install dependencies if needed
+if [ ! -d "node_modules" ]; then
+    npm install
+else
+    echo "Dependencies already installed"
+fi
+
 echo ""
-echo "1. Open Remix IDE: https://remix.ethereum.org"
+echo "🚀 Deploying test tokens to Sepolia..."
 echo ""
-echo "2. Create a new file: contracts/TestToken.sol"
-echo "   - Copy the contents from: $(pwd)/../contracts/TestToken.sol"
-echo ""
-echo "3. Compile the contract:"
-echo "   - Click 'Solidity Compiler' tab"
-echo "   - Select compiler version: 0.8.20 or higher"
-echo "   - Click 'Compile TestToken.sol'"
-echo ""
-echo "4. Deploy TestUSDC:"
-echo "   - Click 'Deploy & Run Transactions' tab"
-echo "   - Environment: 'Injected Provider - MetaMask'"
-echo "   - Make sure MetaMask is connected to Sepolia testnet"
-echo "   - Constructor parameters:"
-echo "     - _name: \"Test USDC\""
-echo "     - _symbol: \"USDC\""
-echo "     - _decimals: 6"
-echo "   - Click 'Deploy'"
-echo "   - Confirm transaction in MetaMask"
-echo "   - Copy the deployed contract address"
-echo ""
-echo "5. Deploy TestDAI:"
-echo "   - Same steps as TestUSDC, but with:"
-echo "     - _name: \"Test DAI\""
-echo "     - _symbol: \"DAI\""
-echo "     - _decimals: 18"
-echo "   - Copy the deployed contract address"
-echo ""
-echo "6. Update application.properties:"
-echo "   Add these lines:"
-echo "   contract.test-usdc.address=<TestUSDC_address>"
-echo "   contract.test-dai.address=<TestDAI_address>"
-echo "   token.funding.initial-usdc=1000"
-echo "   token.funding.initial-dai=1000"
-echo ""
-echo "========================================"
-echo ""
-echo "OPTION 2: Deploy using Hardhat (Advanced)"
-echo "========================================"
-echo ""
-echo "Prerequisites:"
-echo "  - Node.js installed"
-echo "  - Hardhat installed: npm install --save-dev hardhat"
-echo ""
-echo "Coming soon..."
+
+# Run deployment
+npx hardhat run deploy-tokens.js --network sepolia
+
 echo ""
 echo "========================================"
+echo "Next Steps:"
+echo "========================================"
 echo ""
-echo "After deployment, you can verify your contracts on Etherscan:"
-echo "https://sepolia.etherscan.io/"
+echo "1. Copy the contract addresses from above"
+echo "2. Add them to src/main/resources/application.properties:"
+echo "   contract.test-usdc.address=YOUR_USDC_ADDRESS"
+echo "   contract.test-dai.address=YOUR_DAI_ADDRESS"
 echo ""
-echo "Then mint test tokens to any address using the 'mint' function in Remix."
+echo "3. Restart your Spring Boot application"
+echo "4. Click 'Fund Wallet with Test Tokens' in the dashboard"
+echo ""
+echo "Deployment info saved to: $SCRIPT_DIR/deployed-addresses.json"
 echo ""

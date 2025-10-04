@@ -1,0 +1,12 @@
+{
+  "name": "stableips-deployment",
+  "version": "1.0.0",
+  "description": "Automated deployment scripts for StableIPs test tokens",
+  "scripts": {
+    "deploy": "hardhat run deploy-tokens.js --network sepolia"
+  },
+  "devDependencies": {
+    "hardhat": "^2.19.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0"
+  }
+}

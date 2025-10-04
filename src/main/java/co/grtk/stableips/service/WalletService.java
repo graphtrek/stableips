@@ -29,6 +29,7 @@ public class WalletService {
     private final Web3j web3j;
     private final XrpWalletService xrpWalletService;
     private final SolanaWalletService solanaWalletService;
+    private final ContractService contractService;
 
     @Value("${wallet.funding.private-key:}")
     private String fundingPrivateKey;
@@ -36,11 +37,18 @@ public class WalletService {
     @Value("${wallet.funding.initial-amount:10}")
     private BigDecimal initialAmount;
 
-    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService, SolanaWalletService solanaWalletService) {
+    @Value("${token.funding.initial-usdc:1000}")
+    private BigDecimal initialUsdcAmount;
+
+    @Value("${token.funding.initial-dai:1000}")
+    private BigDecimal initialDaiAmount;
+
+    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService, SolanaWalletService solanaWalletService, ContractService contractService) {
         this.userRepository = userRepository;
         this.web3j = web3j;
         this.xrpWalletService = xrpWalletService;
         this.solanaWalletService = solanaWalletService;
+        this.contractService = contractService;
     }
 
     public Credentials generateWallet(String username) {
@@ -141,5 +149,45 @@ public class WalletService {
 
     public BigDecimal getSolanaBalance(String publicKey) {
         return solanaWalletService.getBalance(publicKey);
+    }
+
+    /**
+     * Fund a user's wallet with test USDC and DAI tokens
+     * Requires test token contracts to be deployed and owner credentials configured
+     * @param walletAddress The user's wallet address to receive tokens
+     * @return Map containing transaction hashes for USDC and DAI minting
+     */
+    public java.util.Map<String, String> fundTestTokens(String walletAddress) {
+        if (fundingPrivateKey == null || fundingPrivateKey.isEmpty()) {
+            throw new IllegalStateException("Funding wallet not configured. Please set FUNDED_SEPOLIA_WALLET_PRIVATE_KEY environment variable.");
+        }
+
+        try {
+            BigInteger privateKey = new BigInteger(fundingPrivateKey, 16);
+            Credentials ownerCredentials = Credentials.create(ECKeyPair.create(privateKey));
+
+            // Mint test USDC
+            String usdcTxHash = contractService.mintTestTokens(
+                ownerCredentials,
+                walletAddress,
+                initialUsdcAmount,
+                "TEST-USDC"
+            );
+
+            // Mint test DAI
+            String daiTxHash = contractService.mintTestTokens(
+                ownerCredentials,
+                walletAddress,
+                initialDaiAmount,
+                "TEST-DAI"
+            );
+
+            return java.util.Map.of(
+                "usdc", usdcTxHash,
+                "dai", daiTxHash
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to fund test tokens: " + e.getMessage(), e);
+        }
     }
 }

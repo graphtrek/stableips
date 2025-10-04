@@ -74,6 +74,40 @@
         </div>
     </div>
 
+    <div style="margin: 20px 0;">
+        <h3>Get Test Tokens</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
+            <button
+                hx-post="/wallet/fund"
+                hx-target="#fund-result"
+                hx-swap="innerHTML"
+                style="background: #059669;">
+                💰 Fund Test USDC/DAI
+            </button>
+            <button
+                onclick="window.open('https://cloud.google.com/application/web3/faucet/ethereum/sepolia', '_blank')"
+                style="background: #6366f1;">
+                🔷 Fund ETH
+            </button>
+            <button
+                onclick="window.open('https://faucet.circle.com/', '_blank')"
+                style="background: #2563eb;">
+                💵 Fund USDC (Circle)
+            </button>
+            <button
+                onclick="window.open('https://faucet.solana.com/', '_blank')"
+                style="background: #9945ff;">
+                ☀️ Fund SOL
+            </button>
+            <button
+                onclick="window.open('https://faucet.altnet.rippletest.net/', '_blank')"
+                style="background: #0085ff;">
+                💧 Fund XRP
+            </button>
+        </div>
+        <div id="fund-result" style="margin-top: 10px;"></div>
+    </div>
+
     <h3>Send Tokens</h3>
     <div class="transfer-form">
         <form method="post" action="/transfer">

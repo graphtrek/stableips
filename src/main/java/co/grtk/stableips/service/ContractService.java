@@ -36,6 +36,12 @@ public class ContractService {
     @Value("${contract.dai.address:0x3e622317f8C93f7328350cF0B56d9eD4C620C5d6}")
     private String daiAddress;
 
+    @Value("${contract.test-usdc.address:}")
+    private String testUsdcAddress;
+
+    @Value("${contract.test-dai.address:}")
+    private String testDaiAddress;
+
     @Value("${blockchain.chain-id:11155111}")
     private long chainId;
 
@@ -178,5 +184,62 @@ public class ContractService {
     private BigDecimal convertFromTokenUnits(BigInteger value) {
         BigDecimal divisor = new BigDecimal("1000000000000000000"); // 10^18
         return new BigDecimal(value).divide(divisor);
+    }
+
+    /**
+     * Mint test tokens to a wallet address
+     * Only works with deployed TestToken contracts (test-usdc, test-dai)
+     * @param ownerCredentials Credentials of the contract owner
+     * @param recipientAddress Address to receive the minted tokens
+     * @param amount Amount in token units (e.g., 1000 for 1000 tokens)
+     * @param token Token type ("TEST-USDC" or "TEST-DAI")
+     * @return Transaction hash
+     */
+    public String mintTestTokens(Credentials ownerCredentials, String recipientAddress, BigDecimal amount, String token) {
+        try {
+            String contractAddress = getTestContractAddress(token);
+
+            if (contractAddress == null || contractAddress.isEmpty()) {
+                throw new IllegalStateException("Test token contract not deployed. Please deploy contracts first.");
+            }
+
+            BigInteger value = convertToTokenUnits(amount);
+
+            Function function = new Function(
+                "mint",
+                Arrays.asList(new Address(recipientAddress), new Uint256(value)),
+                Collections.emptyList()
+            );
+
+            String encodedFunction = FunctionEncoder.encode(function);
+
+            TransactionManager transactionManager = new RawTransactionManager(
+                web3j, ownerCredentials, chainId
+            );
+
+            EthSendTransaction transactionResponse = transactionManager.sendTransaction(
+                DefaultGasProvider.GAS_PRICE,
+                DefaultGasProvider.GAS_LIMIT,
+                contractAddress,
+                encodedFunction,
+                BigInteger.ZERO
+            );
+
+            if (transactionResponse.hasError()) {
+                throw new RuntimeException("Mint failed: " + transactionResponse.getError().getMessage());
+            }
+
+            return transactionResponse.getTransactionHash();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to mint test tokens: " + e.getMessage(), e);
+        }
+    }
+
+    private String getTestContractAddress(String token) {
+        return switch (token.toUpperCase()) {
+            case "TEST-USDC" -> testUsdcAddress;
+            case "TEST-DAI" -> testDaiAddress;
+            default -> throw new IllegalArgumentException("Unsupported test token: " + token + ". Use TEST-USDC or TEST-DAI");
+        };
     }
 }

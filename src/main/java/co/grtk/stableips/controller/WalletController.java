@@ -8,9 +8,12 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/wallet")
@@ -56,5 +59,41 @@ public class WalletController {
         model.addAttribute("transactions", transactionService.getUserTransactions(user.getId()));
 
         return "wallet/dashboard";
+    }
+
+    @PostMapping("/fund")
+    @ResponseBody
+    public String fundWallet(HttpSession session) {
+        if (!authService.isAuthenticated(session)) {
+            return "<div class='alert alert-danger'>Not authenticated</div>";
+        }
+
+        try {
+            User user = authService.getCurrentUser(session);
+            Map<String, String> txHashes = walletService.fundTestTokens(user.getWalletAddress());
+
+            return String.format(
+                """
+                <div class='alert alert-success'>
+                    <strong>Success!</strong> Wallet funded with test tokens.
+                    <br>USDC TX: <a href='https://sepolia.etherscan.io/tx/%s' target='_blank'>%s</a>
+                    <br>DAI TX: <a href='https://sepolia.etherscan.io/tx/%s' target='_blank'>%s</a>
+                    <br><small>Refresh page to see updated balances</small>
+                </div>
+                """,
+                txHashes.get("usdc"), txHashes.get("usdc").substring(0, 10) + "...",
+                txHashes.get("dai"), txHashes.get("dai").substring(0, 10) + "..."
+            );
+        } catch (IllegalStateException e) {
+            return String.format(
+                "<div class='alert alert-warning'><strong>Configuration Required:</strong> %s</div>",
+                e.getMessage()
+            );
+        } catch (Exception e) {
+            return String.format(
+                "<div class='alert alert-danger'><strong>Error:</strong> %s</div>",
+                e.getMessage()
+            );
+        }
     }
 }

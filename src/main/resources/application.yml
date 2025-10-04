@@ -1,0 +1,79 @@
+gg:
+  jte:
+    development-mode: true
+
+spring:
+  application:
+    name: stableips
+
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${STABLEIPS_DB_URL}
+    username: ${STABLEIPS_DB_USER}
+    password: ${STABLEIPS_DB_PWD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        fetch_size: 50
+        jdbc:
+          batch_size: 200
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+    open-in-view: false
+
+
+# Web3J Configuration
+web3j:
+  infura:
+    url: https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}
+
+# Ethereum Funding Wallet (replace with your funded Sepolia wallet)
+wallet:
+  funding:
+    private-key: ${FUNDED_SEPOLIA_WALLET_PRIVATE_KEY:}
+    initial-amount: 0.01
+
+# XRP Ledger Configuration
+xrp:
+  network:
+    url: https://s.altnet.rippletest.net:51234
+    type: testnet
+  funding:
+    address: ""
+    secret: ""
+    initial-amount: 10
+
+# Test Token Contracts (deploy using scripts/deploy-test-tokens.sh)
+contract:
+  test-usdc:
+    address: ${TEST_USDC_ADDRESS:}
+  test-dai:
+    address: ${TEST_DAI_ADDRESS:}
+# Initial token amounts for new users (in token units, not smallest denomination)
+token:
+  funding:
+    initial-usdc: 1000
+    initial-dai: 1000
+
+# Solana Configuration (Devnet)
+solana:
+  network:
+    url: https://api.devnet.solana.com
+  faucet:
+    url: https://api.devnet.solana.com
+  funding:
+    initial-amount: 2
+
+# Blockchain Configuration
+blockchain:
+  chain-id: 11155111
+
