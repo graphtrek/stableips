@@ -5,6 +5,8 @@ import co.grtk.stableips.model.User;
 import co.grtk.stableips.service.AuthService;
 import co.grtk.stableips.service.TransactionService;
 import co.grtk.stableips.service.WalletService;
+import gg.jte.TemplateEngine;
+import gg.jte.output.StringOutput;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -47,6 +49,7 @@ public class WalletController {
     private final AuthService authService;
     private final WalletService walletService;
     private final TransactionService transactionService;
+    private final TemplateEngine templateEngine;
 
     /**
      * Constructs a WalletController with required service dependencies.
@@ -54,15 +57,18 @@ public class WalletController {
      * @param authService service for session authentication and user management
      * @param walletService service for wallet operations and balance queries
      * @param transactionService service for transaction history and management
+     * @param templateEngine JTE template engine for rendering HTML fragments
      */
     public WalletController(
         AuthService authService,
         WalletService walletService,
-        TransactionService transactionService
+        TransactionService transactionService,
+        TemplateEngine templateEngine
     ) {
         this.authService = authService;
         this.walletService = walletService;
         this.transactionService = transactionService;
+        this.templateEngine = templateEngine;
     }
 
     /**
@@ -142,23 +148,17 @@ public class WalletController {
     @ResponseBody
     public String regenerateXrpWallet(HttpSession session) {
         if (!authService.isAuthenticated(session)) {
-            return "<div class='alert alert-error'>Not authenticated</div>";
+            return renderTemplate("wallet/fragments/auth-error.jte");
         }
 
         try {
             User user = authService.getCurrentUser(session);
             walletService.regenerateXrpWallet(user);
 
-            return """
-                <div class='alert alert-success'>
-                    <strong>Success!</strong> XRP wallet regenerated. Please refresh the page to see your new wallet address.
-                </div>
-                """;
+            return renderTemplate("wallet/fragments/xrp-regenerate-success.jte");
         } catch (Exception e) {
-            return String.format(
-                "<div class='alert alert-error'>Failed to regenerate XRP wallet: %s</div>",
-                e.getMessage()
-            );
+            return renderTemplate("wallet/fragments/xrp-regenerate-error.jte",
+                Map.of("errorMessage", e.getMessage()));
         }
     }
 
@@ -188,35 +188,47 @@ public class WalletController {
     @ResponseBody
     public String fundWallet(HttpSession session) {
         if (!authService.isAuthenticated(session)) {
-            return "<div class='alert alert-danger'>Not authenticated</div>";
+            return renderTemplate("wallet/fragments/auth-error.jte");
         }
 
         try {
             User user = authService.getCurrentUser(session);
             Map<String, String> txHashes = walletService.fundTestTokens(user.getWalletAddress());
 
-            return String.format(
-                """
-                <div class='alert alert-success'>
-                    <strong>Success!</strong> Wallet funded with test tokens.
-                    <br>USDC TX: <a href='https://sepolia.etherscan.io/tx/%s' target='_blank'>%s</a>
-                    <br>DAI TX: <a href='https://sepolia.etherscan.io/tx/%s' target='_blank'>%s</a>
-                    <br><small>Refresh page to see updated balances</small>
-                </div>
-                """,
-                txHashes.get("usdc"), txHashes.get("usdc").substring(0, 10) + "...",
-                txHashes.get("dai"), txHashes.get("dai").substring(0, 10) + "..."
-            );
+            return renderTemplate("wallet/fragments/fund-success.jte",
+                Map.of(
+                    "usdcTxHash", txHashes.get("usdc"),
+                    "daiTxHash", txHashes.get("dai")
+                ));
         } catch (IllegalStateException e) {
-            return String.format(
-                "<div class='alert alert-warning'><strong>Configuration Required:</strong> %s</div>",
-                e.getMessage()
-            );
+            return renderTemplate("wallet/fragments/fund-config-error.jte",
+                Map.of("errorMessage", e.getMessage()));
         } catch (Exception e) {
-            return String.format(
-                "<div class='alert alert-danger'><strong>Error:</strong> %s</div>",
-                e.getMessage()
-            );
+            return renderTemplate("wallet/fragments/fund-error.jte",
+                Map.of("errorMessage", e.getMessage()));
         }
+    }
+
+    /**
+     * Renders a JTE template with optional parameters.
+     *
+     * @param templatePath the path to the JTE template
+     * @param params optional template parameters
+     * @return rendered HTML string
+     */
+    private String renderTemplate(String templatePath, Map<String, Object> params) {
+        StringOutput output = new StringOutput();
+        templateEngine.render(templatePath, params, output);
+        return output.toString();
+    }
+
+    /**
+     * Renders a JTE template without parameters.
+     *
+     * @param templatePath the path to the JTE template
+     * @return rendered HTML string
+     */
+    private String renderTemplate(String templatePath) {
+        return renderTemplate(templatePath, Map.of());
     }
 }

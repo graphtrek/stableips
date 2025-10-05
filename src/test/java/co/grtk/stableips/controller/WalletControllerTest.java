@@ -20,9 +20,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
@@ -148,5 +151,149 @@ class WalletControllerTest {
         mockMvc.perform(get("/wallet").session(session))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/login"));
+    }
+
+    /**
+     * Tests successful XRP wallet regeneration for authenticated user.
+     */
+    @Test
+    void shouldRegenerateXrpWalletSuccessfully() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        when(authService.isAuthenticated(session)).thenReturn(true);
+        when(authService.getCurrentUser(session)).thenReturn(user);
+
+        // When & Then
+        mockMvc.perform(post("/wallet/regenerate-xrp").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Success")))
+            .andExpect(content().string(containsString("XRP wallet regenerated")));
+    }
+
+    /**
+     * Tests XRP wallet regeneration fails when not authenticated.
+     */
+    @Test
+    void shouldFailXrpRegenerationWhenNotAuthenticated() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        when(authService.isAuthenticated(session)).thenReturn(false);
+
+        // When & Then
+        mockMvc.perform(post("/wallet/regenerate-xrp").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Not authenticated")));
+    }
+
+    /**
+     * Tests XRP wallet regeneration handles errors gracefully.
+     */
+    @Test
+    void shouldHandleXrpRegenerationError() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        when(authService.isAuthenticated(session)).thenReturn(true);
+        when(authService.getCurrentUser(session)).thenReturn(user);
+        doThrow(new RuntimeException("Network error"))
+            .when(walletService).regenerateXrpWallet(user);
+
+        // When & Then
+        mockMvc.perform(post("/wallet/regenerate-xrp").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Failed to regenerate XRP wallet")))
+            .andExpect(content().string(containsString("Network error")));
+    }
+
+    /**
+     * Tests successful wallet funding for authenticated user.
+     */
+    @Test
+    void shouldFundWalletSuccessfully() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        Map<String, String> txHashes = Map.of(
+            "usdc", "0xabc123456789",
+            "dai", "0xdef987654321"
+        );
+
+        when(authService.isAuthenticated(session)).thenReturn(true);
+        when(authService.getCurrentUser(session)).thenReturn(user);
+        when(walletService.fundTestTokens(anyString())).thenReturn(txHashes);
+
+        // When & Then
+        mockMvc.perform(post("/wallet/fund").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Success")))
+            .andExpect(content().string(containsString("Wallet funded")))
+            .andExpect(content().string(containsString("0xabc123456")))
+            .andExpect(content().string(containsString("0xdef987654")));
+    }
+
+    /**
+     * Tests wallet funding fails when not authenticated.
+     */
+    @Test
+    void shouldFailFundingWhenNotAuthenticated() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        when(authService.isAuthenticated(session)).thenReturn(false);
+
+        // When & Then
+        mockMvc.perform(post("/wallet/fund").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Not authenticated")));
+    }
+
+    /**
+     * Tests wallet funding handles configuration errors.
+     */
+    @Test
+    void shouldHandleFundingConfigurationError() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        when(authService.isAuthenticated(session)).thenReturn(true);
+        when(authService.getCurrentUser(session)).thenReturn(user);
+        when(walletService.fundTestTokens(anyString()))
+            .thenThrow(new IllegalStateException("Funding wallet not configured"));
+
+        // When & Then
+        mockMvc.perform(post("/wallet/fund").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Configuration Required")))
+            .andExpect(content().string(containsString("Funding wallet not configured")));
+    }
+
+    /**
+     * Tests wallet funding handles general errors.
+     */
+    @Test
+    void shouldHandleFundingGeneralError() throws Exception {
+        // Given
+        MockHttpSession session = new MockHttpSession();
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        when(authService.isAuthenticated(session)).thenReturn(true);
+        when(authService.getCurrentUser(session)).thenReturn(user);
+        when(walletService.fundTestTokens(anyString()))
+            .thenThrow(new RuntimeException("Transaction failed"));
+
+        // When & Then
+        mockMvc.perform(post("/wallet/fund").session(session))
+            .andExpect(status().isOk())
+            .andExpect(content().string(containsString("Error")))
+            .andExpect(content().string(containsString("Transaction failed")));
     }
 }
