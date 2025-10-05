@@ -59,8 +59,7 @@ class AuthControllerTest {
     void shouldRejectEmptyUsername() throws Exception {
         mockMvc.perform(post("/login")
                 .param("username", ""))
-            .andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/login?error"));
+            .andExpect(status().is4xxClientError()); // GlobalExceptionHandler returns 400 for ValidationException
     }
 
     @Test

@@ -1,9 +1,13 @@
 package co.grtk.stableips.controller;
 
+import co.grtk.stableips.exception.BlockchainException;
+import co.grtk.stableips.exception.InsufficientBalanceException;
 import co.grtk.stableips.model.Transaction;
 import co.grtk.stableips.model.User;
 import co.grtk.stableips.service.AuthService;
 import co.grtk.stableips.service.TransactionService;
+import co.grtk.stableips.service.validation.AuthValidationService;
+import co.grtk.stableips.service.validation.TransferValidationService;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,10 +16,20 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.web3j.crypto.WalletUtils;
 
 import java.math.BigDecimal;
 
+/**
+ * Controller for handling cryptocurrency transfers.
+ *
+ * <p>Handles transfer initiation for multiple tokens across different blockchain networks.
+ * Validation logic is delegated to {@link TransferValidationService} and
+ * {@link AuthValidationService}, and exceptions are handled by
+ * {@link co.grtk.stableips.exception.GlobalExceptionHandler}.</p>
+ *
+ * @author StableIPs Development Team
+ * @since 1.0
+ */
 @Controller
 @RequestMapping("/transfer")
 public class TransferController {
@@ -24,12 +38,44 @@ public class TransferController {
 
     private final AuthService authService;
     private final TransactionService transactionService;
+    private final AuthValidationService authValidationService;
+    private final TransferValidationService transferValidationService;
 
-    public TransferController(AuthService authService, TransactionService transactionService) {
+    /**
+     * Constructs a TransferController with required service dependencies.
+     *
+     * @param authService service for authentication operations
+     * @param transactionService service for transaction management
+     * @param authValidationService service for authentication validation
+     * @param transferValidationService service for transfer validation
+     */
+    public TransferController(
+        AuthService authService,
+        TransactionService transactionService,
+        AuthValidationService authValidationService,
+        TransferValidationService transferValidationService
+    ) {
         this.authService = authService;
         this.transactionService = transactionService;
+        this.authValidationService = authValidationService;
+        this.transferValidationService = transferValidationService;
     }
 
+    /**
+     * Initiates a cryptocurrency transfer.
+     *
+     * <p>Validates the transfer request using {@link TransferValidationService} and
+     * {@link AuthValidationService}, then delegates to {@link TransactionService} for
+     * execution. All exceptions are handled by {@link co.grtk.stableips.exception.GlobalExceptionHandler}.</p>
+     *
+     * @param recipient the recipient wallet address
+     * @param amount the amount to transfer
+     * @param token the token type (USDC, DAI, ETH, XRP, SOL)
+     * @param network the blockchain network (optional, inferred from token)
+     * @param session the HTTP session containing user authentication
+     * @param model Spring MVC model for passing data to the view
+     * @return redirect to wallet dashboard with success or error parameters
+     */
     @PostMapping
     public String initiateTransfer(
         @RequestParam String recipient,
@@ -39,111 +85,24 @@ public class TransferController {
         HttpSession session,
         Model model
     ) {
-        if (!authService.isAuthenticated(session)) {
-            log.warn("Unauthorized transfer attempt - user not authenticated");
-            return "redirect:/login";
-        }
+        // Validate authentication
+        authValidationService.validateAuthenticated(session);
 
-        // Validate inputs
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-            log.warn("Invalid transfer amount: {}", amount);
-            return "redirect:/wallet?error=" + encodeMessage("Invalid amount - must be greater than 0");
-        }
+        // Validate transfer request
+        transferValidationService.validateTransferRequest(recipient, amount, token);
 
-        if (recipient == null || recipient.trim().isEmpty()) {
-            log.warn("Invalid transfer - empty recipient address");
-            return "redirect:/wallet?error=" + encodeMessage("Recipient address is required");
-        }
+        // Get authenticated user
+        User user = authService.getCurrentUser(session);
+        log.info("Processing transfer request: user={}, token={}, amount={}, recipient={}",
+            user.getUsername(), token, amount, recipient);
 
-        // Validate recipient address format (for Ethereum-based tokens)
-        if (!token.equalsIgnoreCase("XRP") && !token.equalsIgnoreCase("SOL")) {
-            if (!WalletUtils.isValidAddress(recipient)) {
-                log.warn("Invalid Ethereum address format: {}", recipient);
-                return "redirect:/wallet?error=" + encodeMessage("Invalid recipient address format");
-            }
-        }
+        // Execute transfer (exceptions handled by GlobalExceptionHandler)
+        Transaction tx = transactionService.initiateTransfer(user, recipient, amount, token);
 
-        try {
-            User user = authService.getCurrentUser(session);
-            log.info("Processing transfer request: user={}, token={}, amount={}, recipient={}",
-                user.getUsername(), token, amount, recipient);
+        log.info("Transfer initiated successfully: user={}, txHash={}, token={}, amount={}",
+            user.getUsername(), tx.getTxHash(), token, amount);
 
-            Transaction tx = transactionService.initiateTransfer(user, recipient, amount, token);
-
-            log.info("Transfer initiated successfully: user={}, txHash={}, token={}, amount={}",
-                user.getUsername(), tx.getTxHash(), token, amount);
-
-            return "redirect:/wallet?success=true&txHash=" + tx.getTxHash();
-
-        } catch (IllegalArgumentException e) {
-            log.warn("Invalid transfer request from user {}: {}",
-                session.getAttribute("username"), e.getMessage());
-            return "redirect:/wallet?error=" + encodeMessage(e.getMessage());
-
-        } catch (IllegalStateException e) {
-            log.error("Transfer configuration error for user {}: {}",
-                session.getAttribute("username"), e.getMessage());
-            return "redirect:/wallet?error=" + encodeMessage("Service configuration error: " + e.getMessage());
-
-        } catch (RuntimeException e) {
-            log.error("Transfer failed for user {}: {}",
-                session.getAttribute("username"), e.getMessage(), e);
-            String userMessage = extractUserFriendlyError(e);
-            return "redirect:/wallet?error=" + encodeMessage(userMessage);
-
-        } catch (Exception e) {
-            log.error("Unexpected error during transfer for user {}: {}",
-                session.getAttribute("username"), e.getMessage(), e);
-            return "redirect:/wallet?error=" + encodeMessage("An unexpected error occurred. Please try again.");
-        }
+        return "redirect:/wallet?success=true&txHash=" + tx.getTxHash();
     }
 
-    /**
-     * Extract user-friendly error messages from exceptions
-     */
-    private String extractUserFriendlyError(RuntimeException e) {
-        String msg = e.getMessage().toLowerCase();
-
-        if (msg.contains("insufficient")) {
-            return "Insufficient balance";
-        }
-        if (msg.contains("gas") && msg.contains("low")) {
-            return "Gas estimation failed - please ensure you have enough ETH for gas fees";
-        }
-        if (msg.contains("gas") && msg.contains("high")) {
-            return "Gas price too high - please try again later";
-        }
-        if (msg.contains("revert")) {
-            return "Transaction would fail - please check token approval and balance";
-        }
-        if (msg.contains("nonce")) {
-            return "Transaction ordering issue - please try again";
-        }
-        if (msg.contains("replacement")) {
-            return "Transaction replacement error - please wait and try again";
-        }
-        if (msg.contains("timeout") || msg.contains("timed out")) {
-            return "Network timeout - please check your connection and try again";
-        }
-        if (msg.contains("invalid address")) {
-            return "Invalid recipient address";
-        }
-        if (msg.contains("contract")) {
-            return "Smart contract error - please verify the token contract is deployed";
-        }
-
-        // Generic fallback
-        return "Transfer failed: " + (e.getMessage() != null ? e.getMessage() : "Unknown error");
-    }
-
-    /**
-     * URL encode error messages for safe redirection
-     */
-    private String encodeMessage(String message) {
-        try {
-            return java.net.URLEncoder.encode(message, "UTF-8");
-        } catch (Exception e) {
-            return "error";
-        }
-    }
 }
