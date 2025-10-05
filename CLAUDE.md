@@ -392,3 +392,32 @@ Example: When adding a new ERC20 token transfer feature:
 - Consult `/subagents/spring-service-layer.md` for service implementation
 - Consult `/subagents/test-coverage.md` for testing the feature
 - Consult `/subagents/database-migration.md` if adding transaction entities
+
+## Additional Documentation
+
+Comprehensive technical documentation is available in `/docs/`:
+
+### Architecture & Design
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture overview and design decisions
+- **[PROJECT_FOUNDATION.md](docs/PROJECT_FOUNDATION.md)** - Project setup and foundational decisions
+
+### Blockchain Integration
+- **[BLOCKCHAIN_TRANSACTION_MONITORING_DESIGN.md](docs/BLOCKCHAIN_TRANSACTION_MONITORING_DESIGN.md)** - Complete blockchain transaction monitoring architecture
+- **[BLOCKCHAIN_DESIGN_SUMMARY.md](docs/BLOCKCHAIN_DESIGN_SUMMARY.md)** - Executive summary of blockchain design
+- **[BLOCKCHAIN_API_RECOMMENDATIONS.md](docs/BLOCKCHAIN_API_RECOMMENDATIONS.md)** - Blockchain-specific implementation patterns
+
+### Implementation Guides
+- **[QUICK_IMPLEMENTATION_GUIDE.md](docs/QUICK_IMPLEMENTATION_GUIDE.md)** - Step-by-step feature implementation guide
+- **[IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md)** - Quick reference for developers
+- **[FUNDING_TRANSACTION_TEST_REPORT.md](docs/FUNDING_TRANSACTION_TEST_REPORT.md)** - Test specifications for funding transactions
+
+### Setup & Configuration
+- **[SETUP_COMPLETE.md](docs/SETUP_COMPLETE.md)** - Initial project setup documentation
+- **[README_TEST_TOKENS.md](docs/README_TEST_TOKENS.md)** - Test token deployment guide
+- **[TEST_TOKEN_DEPLOYMENT.md](docs/TEST_TOKEN_DEPLOYMENT.md)** - Detailed token deployment instructions
+- **[GIT_WORKFLOW_SETUP.md](docs/GIT_WORKFLOW_SETUP.md)** - Git workflow and branching strategy
+
+### Reference
+- **[DOCUMENTATION_INDEX.md](docs/DOCUMENTATION_INDEX.md)** - Complete navigation guide for all documentation
+- **[DAILY_PROGRESS.md](docs/DAILY_PROGRESS.md)** - Development progress tracking
+- **[HELP.md](docs/HELP.md)** - Spring Boot help and reference
