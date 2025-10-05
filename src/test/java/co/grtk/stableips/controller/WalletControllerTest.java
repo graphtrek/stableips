@@ -58,9 +58,19 @@ class WalletControllerTest {
         BigDecimal xrpBalance = new BigDecimal("10.0");
         BigDecimal solBalance = new BigDecimal("2.0");
 
-        Transaction tx1 = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xRecipient2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
-        List<Transaction> transactions = Arrays.asList(tx1, tx2);
+        Transaction sentTx = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
+        Transaction receivedTx = new Transaction(2L, "0xWallet123", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction fundingTx = new Transaction(1L, "0xWallet123", new BigDecimal("10"), "ETH", "ETHEREUM", "0xHash3", "CONFIRMED");
+        fundingTx.setType("FUNDING");
+
+        List<Transaction> sentTransactions = Arrays.asList(sentTx);
+        List<Transaction> receivedTransactions = Arrays.asList(receivedTx);
+        List<Transaction> fundingTransactions = Arrays.asList(fundingTx);
+
+        java.util.Map<String, List<Transaction>> allTransactions = java.util.Map.of(
+            "sent", sentTransactions,
+            "received", receivedTransactions
+        );
 
         when(authService.isAuthenticated(session)).thenReturn(true);
         when(authService.getCurrentUser(session)).thenReturn(user);
@@ -69,7 +79,8 @@ class WalletControllerTest {
         when(transactionService.getTokenBalance(anyString(), org.mockito.ArgumentMatchers.eq("DAI"))).thenReturn(daiBalance);
         when(walletService.getXrpBalance(anyString())).thenReturn(xrpBalance);
         when(walletService.getSolanaBalance(anyString())).thenReturn(solBalance);
-        when(transactionService.getUserTransactions(1L)).thenReturn(transactions);
+        when(transactionService.getAllUserTransactions(user)).thenReturn(allTransactions);
+        when(transactionService.getFundingTransactions(1L)).thenReturn(fundingTransactions);
 
         // When & Then
         mockMvc.perform(get("/wallet").session(session))
@@ -81,7 +92,9 @@ class WalletControllerTest {
             .andExpect(model().attribute("daiBalance", daiBalance))
             .andExpect(model().attribute("xrpBalance", xrpBalance))
             .andExpect(model().attribute("solBalance", solBalance))
-            .andExpect(model().attribute("transactions", transactions));
+            .andExpect(model().attribute("sentTransactions", sentTransactions))
+            .andExpect(model().attribute("receivedTransactions", receivedTransactions))
+            .andExpect(model().attribute("fundingTransactions", fundingTransactions));
     }
 
     @Test

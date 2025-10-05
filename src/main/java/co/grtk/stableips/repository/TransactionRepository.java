@@ -33,4 +33,24 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * Ordered by timestamp descending (newest first)
      */
     List<Transaction> findByRecipientOrderByTimestampDesc(String recipient);
+
+    /**
+     * Find transactions by user and status
+     */
+    List<Transaction> findByUserIdAndStatusOrderByTimestampDesc(Long userId, String status);
+
+    /**
+     * Find transactions by user and type
+     */
+    List<Transaction> findByUserIdAndTypeOrderByTimestampDesc(Long userId, String type);
+
+    /**
+     * Find transactions by user and multiple types
+     */
+    List<Transaction> findByUserIdAndTypeInOrderByTimestampDesc(Long userId, List<String> types);
+
+    /**
+     * Find transactions by status and types (for monitoring)
+     */
+    List<Transaction> findByStatusAndTypeInOrderByTimestampDesc(String status, List<String> types);
 }

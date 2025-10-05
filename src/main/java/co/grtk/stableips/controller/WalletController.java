@@ -54,6 +54,10 @@ public class WalletController {
         java.util.Map<String, java.util.List<co.grtk.stableips.model.Transaction>> allTransactions =
             transactionService.getAllUserTransactions(user);
 
+        // Get funding transactions (ETH funding, token minting, XRP faucet funding)
+        java.util.List<co.grtk.stableips.model.Transaction> fundingTransactions =
+            transactionService.getFundingTransactions(user.getId());
+
         model.addAttribute("user", user);
         model.addAttribute("ethBalance", ethBalance);
         model.addAttribute("usdcBalance", usdcBalance);
@@ -62,6 +66,7 @@ public class WalletController {
         model.addAttribute("solBalance", solBalance);
         model.addAttribute("sentTransactions", allTransactions.get("sent"));
         model.addAttribute("receivedTransactions", allTransactions.get("received"));
+        model.addAttribute("fundingTransactions", fundingTransactions);
 
         return "wallet/dashboard";
     }

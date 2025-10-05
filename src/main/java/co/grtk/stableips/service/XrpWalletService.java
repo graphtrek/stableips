@@ -68,13 +68,27 @@ public class XrpWalletService {
 
     /**
      * Fund a wallet using the testnet faucet
+     * Returns synthetic transaction ID for tracking (faucet doesn't provide real txHash)
+     *
+     * Note: The XRP faucet API doesn't return transaction hashes. For a production system,
+     * you would use a funded wallet (like fundUserWallet with fundingSecret configured)
+     * which uses sendXrp() and returns real blockchain transaction hashes.
      */
     public String fundWalletFromFaucet(String address) {
         try {
+            // Request faucet funding
             FundAccountRequest fundRequest = FundAccountRequest.of(Address.of(address));
             faucetClient.fundAccount(fundRequest);
-            log.info("Funded XRP wallet from faucet: {}", address);
-            return address;
+
+            log.info("Requested faucet funding for XRP wallet: {}", address);
+
+            // Generate synthetic tracking ID
+            // Format: XRP_FAUCET_<address_prefix>_<timestamp>
+            String syntheticTxId = "XRP_FAUCET_" + address.substring(0, Math.min(8, address.length()))
+                + "_" + System.currentTimeMillis();
+
+            log.info("Generated synthetic txId for XRP faucet: {}", syntheticTxId);
+            return syntheticTxId;
         } catch (Exception e) {
             log.error("Failed to fund XRP wallet from faucet: {}", e.getMessage());
             return null;

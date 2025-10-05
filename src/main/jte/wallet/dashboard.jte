@@ -12,6 +12,7 @@
 @param BigDecimal solBalance
 @param List<Transaction> sentTransactions
 @param List<Transaction> receivedTransactions
+@param List<Transaction> fundingTransactions
 
 <!DOCTYPE html>
 <html lang="en">
@@ -46,6 +47,11 @@
         .tx-type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
         .badge-received { background: #10b981; color: white; }
         .badge-sent { background: #ef4444; color: white; }
+        .badge-funding { background: #8b5cf6; color: white; }
+        .badge-minting { background: #06b6d4; color: white; }
+        .badge-faucet { background: #f59e0b; color: white; }
+        .tx-funding { background: #f5f3ff; }
+        .synthetic-hash { color: #9ca3af; font-style: italic; font-size: 11px; }
         .tabs { display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid #e5e7eb; }
         .tab { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 16px; }
         .tab.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
@@ -144,10 +150,11 @@
         <button class="tab active" onclick="showTab('all')">All</button>
         <button class="tab" onclick="showTab('received')">Received (${receivedTransactions.size()})</button>
         <button class="tab" onclick="showTab('sent')">Sent (${sentTransactions.size()})</button>
+        <button class="tab" onclick="showTab('funding')">Funding (${fundingTransactions.size()})</button>
     </div>
 
     <div id="tab-all" class="tab-content active">
-        @if(sentTransactions.isEmpty() && receivedTransactions.isEmpty())
+        @if(sentTransactions.isEmpty() && receivedTransactions.isEmpty() && fundingTransactions.isEmpty())
             <p>No transactions yet.</p>
         @else
             <table>
@@ -215,6 +222,52 @@
                             <td>
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                    @for(Transaction tx : fundingTransactions)
+                        <tr class="tx-funding">
+                            <td>
+                                @if(tx.getType().equals("FUNDING"))
+                                    <span class="tx-type-badge badge-funding">FUNDING</span>
+                                @elseif(tx.getType().equals("MINTING"))
+                                    <span class="tx-type-badge badge-minting">MINTING</span>
+                                @elseif(tx.getType().equals("FAUCET_FUNDING"))
+                                    <span class="tx-type-badge badge-faucet">FAUCET</span>
+                                @else
+                                    <span class="tx-type-badge badge-funding">${tx.getType()}</span>
+                                @endif
+                            </td>
+                            <td>${tx.getNetwork()}</td>
+                            <td>${tx.getToken()}</td>
+                            <td>
+                                ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                            </td>
+                            <td>+${tx.getAmount()}</td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getTxHash().startsWith("XRP_FAUCET_"))
+                                        <span class="synthetic-hash">Faucet Funding</span>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
                                             ${tx.getTxHash().substring(0, 8)}...
                                         </a>
@@ -329,6 +382,75 @@
                             <td>
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        @endif
+    </div>
+
+    <div id="tab-funding" class="tab-content">
+        @if(fundingTransactions.isEmpty())
+            <p>No funding transactions yet.</p>
+        @else
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Network</th>
+                        <th>Token</th>
+                        <th>Wallet Address</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>TX Hash</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(Transaction tx : fundingTransactions)
+                        <tr class="tx-funding">
+                            <td>
+                                @if(tx.getType().equals("FUNDING"))
+                                    <span class="tx-type-badge badge-funding">FUNDING</span>
+                                @elseif(tx.getType().equals("MINTING"))
+                                    <span class="tx-type-badge badge-minting">MINTING</span>
+                                @elseif(tx.getType().equals("FAUCET_FUNDING"))
+                                    <span class="tx-type-badge badge-faucet">FAUCET</span>
+                                @else
+                                    <span class="tx-type-badge badge-funding">${tx.getType()}</span>
+                                @endif
+                            </td>
+                            <td>${tx.getNetwork()}</td>
+                            <td><strong>${tx.getToken()}</strong></td>
+                            <td>
+                                ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                            </td>
+                            <td><strong>+${tx.getAmount()}</strong></td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getTxHash().startsWith("XRP_FAUCET_"))
+                                        <span class="synthetic-hash">Faucet Funding</span>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
                                             ${tx.getTxHash().substring(0, 8)}...
                                         </a>

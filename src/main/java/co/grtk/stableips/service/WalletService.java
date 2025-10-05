@@ -5,6 +5,7 @@ import co.grtk.stableips.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.web3j.crypto.Credentials;
@@ -34,6 +35,7 @@ public class WalletService {
     private final XrpWalletService xrpWalletService;
     private final SolanaWalletService solanaWalletService;
     private final ContractService contractService;
+    private final TransactionService transactionService;
 
     @Value("${wallet.funding.private-key:}")
     private String fundingPrivateKey;
@@ -47,12 +49,20 @@ public class WalletService {
     @Value("${token.funding.initial-dai:1000}")
     private BigDecimal initialDaiAmount;
 
-    public WalletService(UserRepository userRepository, Web3j web3j, XrpWalletService xrpWalletService, SolanaWalletService solanaWalletService, ContractService contractService) {
+    public WalletService(
+        UserRepository userRepository,
+        Web3j web3j,
+        XrpWalletService xrpWalletService,
+        SolanaWalletService solanaWalletService,
+        ContractService contractService,
+        @Lazy TransactionService transactionService
+    ) {
         this.userRepository = userRepository;
         this.web3j = web3j;
         this.xrpWalletService = xrpWalletService;
         this.solanaWalletService = solanaWalletService;
         this.contractService = contractService;
+        this.transactionService = transactionService;
     }
 
     public Credentials generateWallet(String username) {
@@ -140,10 +150,45 @@ public class WalletService {
                 Convert.Unit.ETHER
             ).send();
 
-            log.info("Funded wallet {} with {} ETH. TX: {}", toAddress, amountInEth, receipt.getTransactionHash());
-            return receipt.getTransactionHash();
+            String txHash = receipt.getTransactionHash();
+            log.info("Funded wallet {} with {} ETH. TX: {}", toAddress, amountInEth, txHash);
+
+            // Record funding transaction
+            User user = userRepository.findByWalletAddress(toAddress)
+                .orElseThrow(() -> new RuntimeException("User not found for wallet: " + toAddress));
+
+            transactionService.recordFundingTransaction(
+                user.getId(),
+                toAddress,
+                amountInEth,
+                "ETH",
+                "ETHEREUM",
+                txHash,
+                "FUNDING"
+            );
+
+            return txHash;
         } catch (Exception e) {
             log.error("Failed to fund wallet {}: {}", toAddress, e.getMessage());
+
+            // Record failed funding
+            try {
+                User user = userRepository.findByWalletAddress(toAddress).orElse(null);
+                if (user != null) {
+                    transactionService.recordFundingTransaction(
+                        user.getId(),
+                        toAddress,
+                        amountInEth,
+                        "ETH",
+                        "ETHEREUM",
+                        null,
+                        "FUNDING"
+                    );
+                }
+            } catch (Exception recordError) {
+                log.error("Failed to record funding failure: {}", recordError.getMessage());
+            }
+
             return null;
         }
     }
@@ -153,9 +198,23 @@ public class WalletService {
 
         // Fund Ethereum wallet with ETH
         fundWallet(user.getWalletAddress(), initialAmount);
+        // Note: fundWallet() now records the transaction
 
         // Fund XRP wallet from faucet
-        xrpWalletService.fundUserWallet(user.getXrpAddress());
+        String xrpTxHash = xrpWalletService.fundUserWallet(user.getXrpAddress());
+
+        // Record XRP funding
+        if (xrpTxHash != null && !xrpTxHash.isEmpty()) {
+            transactionService.recordFundingTransaction(
+                user.getId(),
+                user.getXrpAddress(),
+                new BigDecimal("1000"),
+                "XRP",
+                "XRP",
+                xrpTxHash,
+                "FAUCET_FUNDING"
+            );
+        }
 
         // Note: Solana funding removed - users can manually fund via https://faucet.solana.com/
 
@@ -185,6 +244,9 @@ public class WalletService {
             BigInteger privateKey = new BigInteger(fundingPrivateKey, 16);
             Credentials ownerCredentials = Credentials.create(ECKeyPair.create(privateKey));
 
+            User user = userRepository.findByWalletAddress(walletAddress)
+                .orElseThrow(() -> new RuntimeException("User not found for wallet: " + walletAddress));
+
             // Mint test USDC
             String usdcTxHash = contractService.mintTestTokens(
                 ownerCredentials,
@@ -193,12 +255,34 @@ public class WalletService {
                 "TEST-USDC"
             );
 
+            // Record USDC minting
+            transactionService.recordFundingTransaction(
+                user.getId(),
+                walletAddress,
+                initialUsdcAmount,
+                "TEST-USDC",
+                "ETHEREUM",
+                usdcTxHash,
+                "MINTING"
+            );
+
             // Mint test DAI
             String daiTxHash = contractService.mintTestTokens(
                 ownerCredentials,
                 walletAddress,
                 initialDaiAmount,
                 "TEST-DAI"
+            );
+
+            // Record DAI minting
+            transactionService.recordFundingTransaction(
+                user.getId(),
+                walletAddress,
+                initialDaiAmount,
+                "TEST-DAI",
+                "ETHEREUM",
+                daiTxHash,
+                "MINTING"
             );
 
             return java.util.Map.of(

@@ -3,6 +3,8 @@ package co.grtk.stableips.service;
 import co.grtk.stableips.model.Transaction;
 import co.grtk.stableips.model.User;
 import co.grtk.stableips.repository.TransactionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.web3j.crypto.Credentials;
@@ -13,6 +15,8 @@ import java.util.List;
 @Service
 @Transactional
 public class TransactionService {
+
+    private static final Logger log = LoggerFactory.getLogger(TransactionService.class);
 
     private final TransactionRepository transactionRepository;
     private final WalletService walletService;
@@ -132,5 +136,69 @@ public class TransactionService {
 
     public BigDecimal getTokenBalance(String walletAddress, String token) {
         return contractService.getBalance(walletAddress, token);
+    }
+
+    /**
+     * Record a system-initiated funding transaction
+     * @param userId User receiving the funding
+     * @param recipientAddress Wallet address receiving the funds
+     * @param amount Amount of funding
+     * @param token Token type (ETH, XRP, SOL, TEST-USDC, TEST-DAI)
+     * @param network Network name (ETHEREUM, XRP, SOLANA)
+     * @param txHash Transaction hash (null if failed)
+     * @param fundingType Type of funding (FUNDING, MINTING, FAUCET_FUNDING)
+     * @return Saved transaction record
+     */
+    public Transaction recordFundingTransaction(
+        Long userId,
+        String recipientAddress,
+        BigDecimal amount,
+        String token,
+        String network,
+        String txHash,
+        String fundingType
+    ) {
+        // Determine status based on txHash presence
+        String status = (txHash != null && !txHash.isEmpty()) ? "CONFIRMED" : "FAILED";
+
+        Transaction transaction = new Transaction(
+            userId,
+            recipientAddress,
+            amount,
+            token,
+            network,
+            txHash,
+            status
+        );
+
+        transaction.setType(fundingType);
+
+        log.info("Recording {} transaction: user={}, token={}, amount={}, network={}, txHash={}, status={}",
+            fundingType, userId, token, amount, network, txHash, status);
+
+        return transactionRepository.save(transaction);
+    }
+
+    /**
+     * Get all funding transactions for a user
+     * Includes FUNDING, MINTING, and FAUCET_FUNDING types
+     * @param userId User ID
+     * @return List of funding transactions ordered by timestamp descending
+     */
+    public List<Transaction> getFundingTransactions(Long userId) {
+        return transactionRepository.findByUserIdAndTypeInOrderByTimestampDesc(
+            userId,
+            List.of("FUNDING", "MINTING", "FAUCET_FUNDING")
+        );
+    }
+
+    /**
+     * Get transactions filtered by type
+     * @param userId User ID
+     * @param type Transaction type (TRANSFER, FUNDING, MINTING, FAUCET_FUNDING)
+     * @return List of transactions ordered by timestamp descending
+     */
+    public List<Transaction> getTransactionsByType(Long userId, String type) {
+        return transactionRepository.findByUserIdAndTypeOrderByTimestampDesc(userId, type);
     }
 }

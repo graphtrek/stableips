@@ -27,11 +27,14 @@ public class Transaction {
     @Column(nullable = false)
     private String network;
 
-    @Column(nullable = false)
+    @Column(nullable = true)  // Can be null for failed funding transactions
     private String txHash;
 
     @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
+    private String type = "TRANSFER";
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp;
@@ -129,5 +132,13 @@ public class Transaction {
 
     public void setNetwork(String network) {
         this.network = network;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
