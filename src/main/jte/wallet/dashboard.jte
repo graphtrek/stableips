@@ -2,6 +2,7 @@
 @import co.grtk.stableips.model.Transaction
 @import java.math.BigDecimal
 @import java.util.List
+@import java.time.format.DateTimeFormatter
 
 @param User user
 @param BigDecimal ethBalance
@@ -9,7 +10,8 @@
 @param BigDecimal daiBalance
 @param BigDecimal xrpBalance
 @param BigDecimal solBalance
-@param List<Transaction> transactions
+@param List<Transaction> sentTransactions
+@param List<Transaction> receivedTransactions
 
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +25,12 @@
         h1 { color: #2563eb; }
         .wallet-info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0; }
         .balances { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .balance-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .balance-card { padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb; }
+        .balance-card-eth { background: #627eea; color: white; }
+        .balance-card-xrp { background: #23292f; color: white; }
+        .balance-card-sol { background: #9945ff; color: white; }
+        .balance-card-usdc { background: #2775ca; color: white; }
+        .balance-card-dai { background: #f5ac37; color: white; }
         .transfer-form { background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0; }
         input, select { width: 100%; padding: 8px; margin: 5px 0 15px; border: 1px solid #d1d5db; border-radius: 4px; }
         button { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
@@ -34,6 +41,16 @@
         .status-pending { color: #f59e0b; }
         .status-confirmed { color: #10b981; }
         .status-failed { color: #ef4444; }
+        .tx-received { background: #ecfdf5; }
+        .tx-sent { background: #fef3f2; }
+        .tx-type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-received { background: #10b981; color: white; }
+        .badge-sent { background: #ef4444; color: white; }
+        .tabs { display: flex; gap: 10px; margin: 20px 0; border-bottom: 2px solid #e5e7eb; }
+        .tab { padding: 10px 20px; cursor: pointer; border: none; background: none; font-size: 16px; }
+        .tab.active { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .alert { padding: 12px; border-radius: 4px; margin: 15px 0; }
         .alert-success { background: #d1fae5; color: #065f46; }
         .alert-error { background: #fee2e2; color: #991b1b; }
@@ -52,23 +69,23 @@
 
     <h3>Balances</h3>
     <div class="balances">
-        <div class="balance-card">
+        <div class="balance-card balance-card-eth">
             <h4>ETH</h4>
             <p>${ethBalance} ETH</p>
         </div>
-        <div class="balance-card">
+        <div class="balance-card balance-card-xrp">
             <h4>XRP</h4>
             <p>${xrpBalance} XRP</p>
         </div>
-        <div class="balance-card">
+        <div class="balance-card balance-card-sol">
             <h4>SOL</h4>
             <p>${solBalance} SOL</p>
         </div>
-        <div class="balance-card">
+        <div class="balance-card balance-card-usdc">
             <h4>USDC</h4>
             <p>${usdcBalance} USDC</p>
         </div>
-        <div class="balance-card">
+        <div class="balance-card balance-card-dai">
             <h4>DAI</h4>
             <p>${daiBalance} DAI</p>
         </div>
@@ -121,35 +138,234 @@
         </form>
     </div>
 
-    <h3>Recent Transactions</h3>
-    @if(transactions.isEmpty())
-        <p>No transactions yet.</p>
-    @else
-        <table>
-            <thead>
-                <tr>
-                    <th>Network</th>
-                    <th>Token</th>
-                    <th>Recipient</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>TX Hash</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for(Transaction tx : transactions)
+    <h3>Transactions</h3>
+
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('all')">All</button>
+        <button class="tab" onclick="showTab('received')">Received (${receivedTransactions.size()})</button>
+        <button class="tab" onclick="showTab('sent')">Sent (${sentTransactions.size()})</button>
+    </div>
+
+    <div id="tab-all" class="tab-content active">
+        @if(sentTransactions.isEmpty() && receivedTransactions.isEmpty())
+            <p>No transactions yet.</p>
+        @else
+            <table>
+                <thead>
                     <tr>
-                        <td>${tx.getNetwork()}</td>
-                        <td>${tx.getToken()}</td>
-                        <td>${tx.getRecipient()}</td>
-                        <td>${tx.getAmount()}</td>
-                        <td>${tx.getStatus()}</td>
-                        <td>${tx.getTxHash().length() > 10 ? tx.getTxHash().substring(0, 10) + "..." : tx.getTxHash()}</td>
+                        <th>Type</th>
+                        <th>Network</th>
+                        <th>Token</th>
+                        <th>Address</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>TX Hash</th>
+                        <th>Time</th>
                     </tr>
-                @endfor
-            </tbody>
-        </table>
-    @endif
+                </thead>
+                <tbody>
+                    @for(Transaction tx : receivedTransactions)
+                        <tr class="tx-received">
+                            <td><span class="tx-type-badge badge-received">↓ IN</span></td>
+                            <td>${tx.getNetwork()}</td>
+                            <td>${tx.getToken()}</td>
+                            <td>
+                                <a href="${tx.getRecipient()}">
+                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                </a>
+                            </td>
+                            <td>+${tx.getAmount()}</td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                    @for(Transaction tx : sentTransactions)
+                        <tr class="tx-sent">
+                            <td><span class="tx-type-badge badge-sent">↑ OUT</span></td>
+                            <td>${tx.getNetwork()}</td>
+                            <td>${tx.getToken()}</td>
+                            <td>
+                                <a href="${tx.getRecipient()}">
+                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                </a>
+                            </td>
+                            <td>-${tx.getAmount()}</td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        @endif
+    </div>
+
+    <div id="tab-received" class="tab-content">
+        @if(receivedTransactions.isEmpty())
+            <p>No received transactions yet.</p>
+        @else
+            <table>
+                <thead>
+                    <tr>
+                        <th>Network</th>
+                        <th>Token</th>
+                        <th>From Address</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>TX Hash</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(Transaction tx : receivedTransactions)
+                        <tr class="tx-received">
+                            <td>${tx.getNetwork()}</td>
+                            <td>${tx.getToken()}</td>
+                            <td>
+                                <a href="${tx.getRecipient()}">
+                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                </a>
+                            </td>
+                            <td><strong>+${tx.getAmount()}</strong></td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        @endif
+    </div>
+
+    <div id="tab-sent" class="tab-content">
+        @if(sentTransactions.isEmpty())
+            <p>No sent transactions yet.</p>
+        @else
+            <table>
+                <thead>
+                    <tr>
+                        <th>Network</th>
+                        <th>Token</th>
+                        <th>To Address</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>TX Hash</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(Transaction tx : sentTransactions)
+                        <tr class="tx-sent">
+                            <td>${tx.getNetwork()}</td>
+                            <td>${tx.getToken()}</td>
+                            <td>
+                                <a href="${tx.getRecipient()}">
+                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                </a>
+                            </td>
+                            <td><strong>-${tx.getAmount()}</strong></td>
+                            <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
+                            <td>
+                                @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
+                                    @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
+                                        <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
+                                        <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
+                                        <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
+                                            ${tx.getTxHash().substring(0, 8)}...
+                                        </a>
+                                    @else
+                                        ${tx.getTxHash().substring(0, 8)}...
+                                    @endif
+                                @else
+                                    Pending...
+                                @endif
+                            </td>
+                            <td>${tx.getTimestamp().format(DateTimeFormatter.ofPattern("MM/dd HH:mm"))}</td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        @endif
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
 
     <form method="post" action="/logout">
         <button type="submit">Logout</button>

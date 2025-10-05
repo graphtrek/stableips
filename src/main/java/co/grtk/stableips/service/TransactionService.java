@@ -45,7 +45,7 @@ public class TransactionService {
         }
         // Handle XRP transfers
         else if ("XRP".equalsIgnoreCase(token)) {
-            txHash = xrpWalletService.sendXrp(user.getXrpAddress(), recipient, amount);
+            txHash = xrpWalletService.sendXrp(user.getXrpSecret(), recipient, amount);
             network = "XRP";
         }
         // Handle Ethereum-based transfers (ETH, USDC, DAI)
@@ -70,6 +70,51 @@ public class TransactionService {
 
     public List<Transaction> getUserTransactions(Long userId) {
         return transactionRepository.findByUserIdOrderByTimestampDesc(userId);
+    }
+
+    /**
+     * Get all transactions received by a user's wallets (Ethereum, XRP, Solana)
+     * @param user The user whose received transactions to fetch
+     * @return List of received transactions ordered by timestamp descending
+     */
+    public List<Transaction> getReceivedTransactions(User user) {
+        List<Transaction> received = new java.util.ArrayList<>();
+
+        // Get transactions received by Ethereum wallet
+        if (user.getWalletAddress() != null) {
+            received.addAll(transactionRepository.findByRecipientOrderByTimestampDesc(user.getWalletAddress()));
+        }
+
+        // Get transactions received by XRP wallet
+        if (user.getXrpAddress() != null) {
+            received.addAll(transactionRepository.findByRecipientOrderByTimestampDesc(user.getXrpAddress()));
+        }
+
+        // Get transactions received by Solana wallet
+        if (user.getSolanaPublicKey() != null) {
+            received.addAll(transactionRepository.findByRecipientOrderByTimestampDesc(user.getSolanaPublicKey()));
+        }
+
+        // Sort all received transactions by timestamp descending
+        received.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
+
+        return received;
+    }
+
+    /**
+     * Get all transactions for a user (both sent and received)
+     * Each transaction is marked with a "type" field for display purposes
+     * @param user The user whose transactions to fetch
+     * @return Combined list of sent and received transactions
+     */
+    public java.util.Map<String, List<Transaction>> getAllUserTransactions(User user) {
+        List<Transaction> sent = getUserTransactions(user.getId());
+        List<Transaction> received = getReceivedTransactions(user);
+
+        return java.util.Map.of(
+            "sent", sent,
+            "received", received
+        );
     }
 
     public Transaction getTransactionByHash(String txHash) {

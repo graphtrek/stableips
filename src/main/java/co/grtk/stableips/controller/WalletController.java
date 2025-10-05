@@ -50,15 +50,44 @@ public class WalletController {
         BigDecimal xrpBalance = walletService.getXrpBalance(xrpAddress);
         BigDecimal solBalance = walletService.getSolanaBalance(solanaPublicKey);
 
+        // Get both sent and received transactions
+        java.util.Map<String, java.util.List<co.grtk.stableips.model.Transaction>> allTransactions =
+            transactionService.getAllUserTransactions(user);
+
         model.addAttribute("user", user);
         model.addAttribute("ethBalance", ethBalance);
         model.addAttribute("usdcBalance", usdcBalance);
         model.addAttribute("daiBalance", daiBalance);
         model.addAttribute("xrpBalance", xrpBalance);
         model.addAttribute("solBalance", solBalance);
-        model.addAttribute("transactions", transactionService.getUserTransactions(user.getId()));
+        model.addAttribute("sentTransactions", allTransactions.get("sent"));
+        model.addAttribute("receivedTransactions", allTransactions.get("received"));
 
         return "wallet/dashboard";
+    }
+
+    @PostMapping("/regenerate-xrp")
+    @ResponseBody
+    public String regenerateXrpWallet(HttpSession session) {
+        if (!authService.isAuthenticated(session)) {
+            return "<div class='alert alert-error'>Not authenticated</div>";
+        }
+
+        try {
+            User user = authService.getCurrentUser(session);
+            walletService.regenerateXrpWallet(user);
+
+            return """
+                <div class='alert alert-success'>
+                    <strong>Success!</strong> XRP wallet regenerated. Please refresh the page to see your new wallet address.
+                </div>
+                """;
+        } catch (Exception e) {
+            return String.format(
+                "<div class='alert alert-error'>Failed to regenerate XRP wallet: %s</div>",
+                e.getMessage()
+            );
+        }
     }
 
     @PostMapping("/fund")

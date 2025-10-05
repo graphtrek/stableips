@@ -27,4 +27,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
      * Useful for monitoring specific blockchain networks
      */
     List<Transaction> findByStatusAndNetwork(String status, String network);
+
+    /**
+     * Find all transactions received by a wallet address (where address is recipient)
+     * Ordered by timestamp descending (newest first)
+     */
+    List<Transaction> findByRecipientOrderByTimestampDesc(String recipient);
 }

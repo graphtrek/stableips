@@ -9,6 +9,7 @@ import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.client.faucet.FaucetClient;
 import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
 import org.xrpl.xrpl4j.crypto.keys.Seed;
+import org.xrpl.xrpl4j.crypto.keys.Base58EncodedSecret;
 import org.xrpl.xrpl4j.crypto.signing.bc.BcSignatureService;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
@@ -56,11 +57,12 @@ public class XrpWalletService {
         Address address = keyPair.publicKey().deriveAddress();
 
         // Cache seed for later use (in production, store encrypted in DB)
+        String seedString = seed.toString();
         seedCache.put(address.value(), seed);
 
         return new XrpWallet(
             address.value(),
-            address.value() // Store address as "secret" for now (will use seed from cache)
+            seedString // Store the seed as string
         );
     }
 
@@ -96,14 +98,23 @@ public class XrpWalletService {
     }
 
     /**
-     * Send XRP from one address to another
+     * Send XRP from one address to another using the seed string
+     * @param fromAddressOrSeed - can be either the XRP address (to look up in cache) or the seed string itself
      */
-    public String sendXrp(String fromAddress, String toAddress, BigDecimal amount) {
+    public String sendXrp(String fromAddressOrSeed, String toAddress, BigDecimal amount) {
         try {
-            // Get the seed from cache
-            Seed seed = seedCache.get(fromAddress);
-            if (seed == null) {
-                throw new RuntimeException("Seed not found for address: " + fromAddress);
+            Seed seed;
+            String fromAddress;
+
+            // First try to get from cache (if it's an address)
+            if (seedCache.containsKey(fromAddressOrSeed)) {
+                seed = seedCache.get(fromAddressOrSeed);
+                fromAddress = fromAddressOrSeed;
+            } else {
+                // Otherwise treat it as a seed string and store it in cache
+                seed = parseSeedFromString(fromAddressOrSeed);
+                fromAddress = seed.deriveKeyPair().publicKey().deriveAddress().value();
+                seedCache.put(fromAddress, seed);
             }
 
             // Get account info for sequence number
@@ -159,7 +170,32 @@ public class XrpWalletService {
             return fundWalletFromFaucet(toAddress);
         }
 
-        return sendXrp(fundingAddress, toAddress, initialAmount);
+        return sendXrp(fundingSecret, toAddress, initialAmount);
+    }
+
+    /**
+     * Parse a Seed from various string formats
+     */
+    private Seed parseSeedFromString(String seedString) {
+        try {
+            // Try parsing as base58 encoded secret (starts with 's')
+            if (seedString.startsWith("s")) {
+                return Seed.fromBase58EncodedSecret(Base58EncodedSecret.of(seedString));
+            }
+            // If it starts with 'r', it's an address (legacy data) - cannot recover seed
+            if (seedString.startsWith("r")) {
+                throw new IllegalArgumentException(
+                    "Cannot derive seed from XRP address. Please regenerate your wallet. " +
+                    "This error occurs because the wallet was created with an older version that didn't properly store the seed."
+                );
+            }
+            // Otherwise try as hex or other format
+            throw new IllegalArgumentException("Unsupported seed format: " + seedString);
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse seed: " + e.getMessage(), e);
+        }
     }
 
     /**

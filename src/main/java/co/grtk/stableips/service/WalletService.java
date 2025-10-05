@@ -84,6 +84,22 @@ public class WalletService {
         return userRepository.save(user);
     }
 
+    /**
+     * Regenerate XRP wallet for a user (useful for fixing legacy data)
+     */
+    public User regenerateXrpWallet(User user) {
+        XrpWalletService.XrpWallet xrpWallet = xrpWalletService.generateWallet();
+        user.setXrpAddress(xrpWallet.getAddress());
+        user.setXrpSecret(xrpWallet.getSecret());
+
+        User savedUser = userRepository.save(user);
+
+        // Fund the new wallet
+        xrpWalletService.fundWalletFromFaucet(xrpWallet.getAddress());
+
+        return savedUser;
+    }
+
     public BigDecimal getEthBalance(String address) {
         try {
             BigInteger weiBalance = web3j.ethGetBalance(address, DefaultBlockParameterName.LATEST)
