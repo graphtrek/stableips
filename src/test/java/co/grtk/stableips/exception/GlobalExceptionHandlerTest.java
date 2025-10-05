@@ -6,7 +6,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.math.BigDecimal;
 
@@ -223,5 +226,48 @@ class GlobalExceptionHandlerTest {
         assertThat(mav.getViewName()).isEqualTo("redirect:/wallet");
         String errorMessage = (String) mav.getModel().get("error");
         assertThat(errorMessage).contains("unexpected error occurred");
+    }
+
+    @Test
+    void shouldHandleNoResourceFoundException() {
+        NoResourceFoundException ex = new NoResourceFoundException(null, "v1/health");
+
+        // Should not throw, should handle silently
+        exceptionHandler.handleResourceNotFoundException(ex);
+
+        // No assertions - just verifying it doesn't throw
+    }
+
+    @Test
+    void shouldFilterOutHealthCheckErrorsInGenericHandler() {
+        Exception ex = new Exception("No static resource v1/health");
+
+        ModelAndView mav = exceptionHandler.handleGenericException(ex);
+
+        // Should return 404 status without redirect
+        assertThat(mav.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(mav.getViewName()).isNull();
+    }
+
+    @Test
+    void shouldFilterOutFaviconErrorsInGenericHandler() {
+        Exception ex = new Exception("No static resource favicon.ico");
+
+        ModelAndView mav = exceptionHandler.handleGenericException(ex);
+
+        // Should return 404 status without redirect
+        assertThat(mav.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(mav.getViewName()).isNull();
+    }
+
+    @Test
+    void shouldFilterOutActuatorErrorsInGenericHandler() {
+        Exception ex = new Exception("No static resource /actuator/health");
+
+        ModelAndView mav = exceptionHandler.handleGenericException(ex);
+
+        // Should return 404 status without redirect
+        assertThat(mav.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(mav.getViewName()).isNull();
     }
 }

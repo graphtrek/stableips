@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
  * Global exception handler for the application.
@@ -169,9 +171,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles missing resource exceptions (404 errors for static resources).
+     *
+     * <p>Silently returns 404 for common resources like health checks, favicons, etc.
+     * Prevents log pollution from monitoring tools and browsers requesting non-existent resources.</p>
+     *
+     * @param ex the resource not found exception
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void handleResourceNotFoundException(Exception ex) {
+        // Log at DEBUG level only to avoid log pollution
+        log.debug("Resource not found: {}", ex.getMessage());
+        // Return 404 status without any body or redirect
+    }
+
+    /**
      * Handles all other unexpected exceptions.
      *
-     * <p>Logs the full stack trace and returns a generic error message to the user.</p>
+     * <p>Filters out common static resource errors and logs the full stack trace
+     * for genuine application errors.</p>
      *
      * @param ex the unexpected exception
      * @return redirect to wallet with generic error message
@@ -179,7 +198,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ModelAndView handleGenericException(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        String message = ex.getMessage();
+
+        // Filter out common static resource errors to avoid log pollution
+        if (message != null && (message.contains("No static resource") ||
+            message.contains("favicon.ico") ||
+            message.contains("/health") ||
+            message.contains("/actuator"))) {
+            log.debug("Static resource not found: {}", message);
+            ModelAndView mav = new ModelAndView();
+            mav.setStatus(HttpStatus.NOT_FOUND);
+            return mav;
+        }
+
+        log.error("Unexpected error: {}", message, ex);
 
         ModelAndView mav = new ModelAndView("redirect:/wallet");
         mav.addObject("error", "An unexpected error occurred. Please try again.");

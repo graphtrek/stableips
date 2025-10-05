@@ -85,3 +85,10 @@ solana:
   funding:
     initial-amount: 2
 
+# Logging Configuration
+logging:
+  level:
+    co.grtk.stableips: INFO
+  requests:
+    enabled: false  # Set to true to enable detailed request logging for debugging
+

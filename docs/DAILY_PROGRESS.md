@@ -1749,3 +1749,190 @@ All 141 tests passing ✅
 
 ### Session Summary
 This session focused on **validation architecture and error handling**. Successfully implemented a complete validation layer using dedicated services, eliminating all validation logic from controllers. Created a comprehensive custom exception hierarchy and centralized all error handling using Spring `@ControllerAdvice`. The refactoring dramatically improves code organization, maintainability, and testability while providing consistent, user-friendly error messages. Controllers are now thin and focused on orchestration, following Spring Boot best practices. Added 58 new tests bringing total to 141 tests passing.
+
+---
+
+## 2025-10-05 (Session 7) - Exception Handling Improvements & Request Logging
+
+### Work Completed
+- ✅ Fixed `GlobalExceptionHandler` to properly handle missing resource exceptions (404 errors)
+- ✅ Added specific handler for `NoResourceFoundException` and `NoHandlerFoundException`
+- ✅ Implemented smart filtering for common static resource requests (health checks, favicon, actuator)
+- ✅ Created configurable `RequestLoggingFilter` for debugging HTTP requests
+- ✅ Identified VS Code as source of `/v1/health` requests
+- ✅ Added 4 new tests for resource-not-found handling
+- ✅ Configured logging levels for production use
+
+### Problem Solved
+**Issue**: Application logs were showing periodic "Unexpected error: No static resource v1/health" messages after `TransactionMonitoringService` started.
+
+**Root Cause**: VS Code (Spring Boot Dashboard extension) was making periodic `/v1/health` requests to monitor the running application. The `GlobalExceptionHandler` was catching these as generic exceptions and logging them at ERROR level.
+
+**Solution**:
+1. Added dedicated exception handler for `NoResourceFoundException`/`NoHandlerFoundException`
+2. Enhanced generic exception handler to filter common static resource patterns
+3. These requests now return 404 silently at DEBUG level (no log pollution)
+
+### Files Modified
+
+**src/main/java/co/grtk/stableips/exception/GlobalExceptionHandler.java**:
+```java
+// Added specific handler for missing resources
+@ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+@ResponseStatus(HttpStatus.NOT_FOUND)
+public void handleResourceNotFoundException(Exception ex) {
+    log.debug("Resource not found: {}", ex.getMessage());
+}
+
+// Enhanced generic handler with filtering
+@ExceptionHandler(Exception.class)
+@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+public ModelAndView handleGenericException(Exception ex) {
+    String message = ex.getMessage();
+
+    // Filter out common static resource errors
+    if (message != null && (message.contains("No static resource") ||
+        message.contains("favicon.ico") ||
+        message.contains("/health") ||
+        message.contains("/actuator"))) {
+        log.debug("Static resource not found: {}", message);
+        ModelAndView mav = new ModelAndView();
+        mav.setStatus(HttpStatus.NOT_FOUND);
+        return mav;
+    }
+
+    log.error("Unexpected error: {}", message, ex);
+    // ... rest of handler
+}
+```
+
+**src/main/java/co/grtk/stableips/config/RequestLoggingFilter.java** (Created):
+- Configurable servlet filter for detailed request logging
+- Disabled by default (`logging.requests.enabled=false`)
+- When enabled, logs ALL request details:
+  - HTTP method, URI, query parameters
+  - Remote IP, host, port
+  - User-Agent, Referer headers
+  - All HTTP headers
+- Useful for debugging external integrations or identifying unexpected callers
+
+**src/main/resources/application.yml**:
+```yaml
+# Logging Configuration
+logging:
+  level:
+    co.grtk.stableips: INFO  # Production level
+  requests:
+    enabled: false  # Set to true to enable detailed request logging
+```
+
+### Files Created
+1. `src/main/java/co/grtk/stableips/config/RequestLoggingFilter.java` - Configurable request logging filter
+
+### Tests Added
+**GlobalExceptionHandlerTest.java** (+4 tests):
+```java
+@Test
+void shouldHandleNoResourceFoundException() { ... }
+
+@Test
+void shouldFilterOutHealthCheckErrorsInGenericHandler() { ... }
+
+@Test
+void shouldFilterOutFaviconErrorsInGenericHandler() { ... }
+
+@Test
+void shouldFilterOutActuatorErrorsInGenericHandler() { ... }
+```
+
+**Total Tests**: 145 passing (141 + 4 new tests)
+
+### Technical Details
+
+**Exception Handler Precedence**:
+1. Most specific handlers first (`ValidationException`, `AuthenticationException`, etc.)
+2. Resource-not-found handlers (`NoResourceFoundException`, `NoHandlerFoundException`)
+3. Generic `Exception` handler as fallback with smart filtering
+
+**Filtered Resource Patterns**:
+- `/v1/health` (VS Code, monitoring tools)
+- `/actuator/*` (Spring Boot Actuator endpoints)
+- `favicon.ico` (Browser requests)
+- Any path containing "No static resource" in error message
+
+**RequestLoggingFilter Usage**:
+```bash
+# Enable via application.yml
+logging.requests.enabled: true
+
+# Enable via environment variable
+export LOGGING_REQUESTS_ENABLED=true
+
+# Enable via command line
+./gradlew bootRun --args='--logging.requests.enabled=true'
+```
+
+### Investigation Process
+1. User reported: "periodically I see this exception GlobalExceptionHandler: Unexpected error: No static resource v1/health"
+2. Enabled DEBUG logging to capture request details
+3. Added temporary logging to identify caller
+4. Discovered: VS Code Spring Boot Dashboard making periodic health checks
+5. Solution: Smart exception handling + configurable request logging for future debugging
+
+### Decisions Made
+
+**Why filter instead of adding /v1/health endpoint?**
+- These are monitoring tool requests, not application requirements
+- Adding endpoints encourages incorrect monitoring patterns
+- Spring Boot Actuator provides proper health endpoints if needed
+- Filtering prevents log pollution without adding unnecessary code
+
+**Why make RequestLoggingFilter configurable?**
+- Detailed request logging has performance overhead
+- Not needed in normal operation
+- Essential for debugging integration issues
+- User requested it be "useful later on" - perfect for troubleshooting
+
+**Why DEBUG level for filtered resources?**
+- These are expected requests (monitoring, browsers)
+- DEBUG level available if investigation needed
+- Keeps INFO/WARN logs clean for real issues
+
+### Benefits
+- ✅ Clean logs in production (no more "Unexpected error" spam)
+- ✅ VS Code integration works without log pollution
+- ✅ Future-proof debugging with configurable request logging
+- ✅ Proper exception hierarchy (specific → generic)
+- ✅ Smart filtering for common monitoring patterns
+- ✅ Maintains security (doesn't expose endpoint existence)
+
+### Test Results
+```bash
+./gradlew test
+
+BUILD SUCCESSFUL in 12s
+All 145 tests passing ✅
+```
+
+**Test Breakdown**:
+- GlobalExceptionHandler: 19/19 passing (+4 new)
+- TransferValidationService: 26/26 passing
+- AuthValidationService: 11/11 passing
+- Controllers: 14/14 passing
+- All other tests: 75/75 passing
+
+### Next Steps
+1. Monitor production logs to verify filtering works correctly
+2. Document RequestLoggingFilter usage in README if needed
+3. Consider adding proper health endpoint if monitoring is required
+4. Continue with next feature development
+
+### Hours Spent
+~1 hour:
+- Investigation and debugging: 25 min
+- Exception handler improvements: 15 min
+- Request logging filter: 15 min
+- Testing and documentation: 5 min
+
+### Session Summary
+This session focused on **production log quality and debugging tools**. Successfully eliminated log pollution from VS Code health checks by implementing smart exception filtering in `GlobalExceptionHandler`. Created a configurable `RequestLoggingFilter` that's disabled by default but can be enabled for detailed request debugging when needed. The solution maintains clean production logs while providing powerful debugging capabilities for future troubleshooting. All 145 tests passing.
