@@ -1,7 +1,9 @@
 package co.grtk.stableips.service;
 
 import co.grtk.stableips.model.Transaction;
+import co.grtk.stableips.model.User;
 import co.grtk.stableips.repository.TransactionRepository;
+import co.grtk.stableips.repository.UserRepository;
 import org.p2p.solanaj.core.PublicKey;
 import org.p2p.solanaj.rpc.RpcClient;
 import org.slf4j.Logger;
@@ -10,13 +12,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.utils.Convert;
 import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.model.client.transactions.TransactionRequestParams;
 import org.xrpl.xrpl4j.model.client.transactions.TransactionResult;
 import org.xrpl.xrpl4j.model.transactions.Hash256;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +39,7 @@ public class TransactionMonitoringService {
     private static final int MAX_MONITORING_AGE_HOURS = 24; // Stop monitoring after 24 hours
 
     private final TransactionRepository transactionRepository;
+    private final UserRepository userRepository;
     private final Web3j web3j;
     private final XrplClient xrplClient;
     private final RpcClient solanaClient;
@@ -41,10 +47,12 @@ public class TransactionMonitoringService {
 
     public TransactionMonitoringService(
             TransactionRepository transactionRepository,
+            UserRepository userRepository,
             Web3j web3j,
             XrplClient xrplClient,
             TransactionService transactionService) {
         this.transactionRepository = transactionRepository;
+        this.userRepository = userRepository;
         this.web3j = web3j;
         this.xrplClient = xrplClient;
         this.solanaClient = new RpcClient(org.p2p.solanaj.rpc.Cluster.DEVNET);
@@ -64,35 +72,128 @@ public class TransactionMonitoringService {
 
         if (pendingTransactions.isEmpty()) {
             log.debug("No pending transactions to monitor");
-            return;
-        }
+        } else {
+            log.info("Monitoring {} pending transactions", pendingTransactions.size());
 
-        log.info("Monitoring {} pending transactions", pendingTransactions.size());
+            for (Transaction tx : pendingTransactions) {
+                try {
+                    // Check if transaction is too old
+                    if (isTransactionTooOld(tx)) {
+                        log.warn("Transaction {} is older than {} hours, marking as TIMEOUT",
+                                tx.getTxHash(), MAX_MONITORING_AGE_HOURS);
+                        transactionService.updateTransactionStatus(tx.getId(), "TIMEOUT");
+                        continue;
+                    }
 
-        for (Transaction tx : pendingTransactions) {
-            try {
-                // Check if transaction is too old
-                if (isTransactionTooOld(tx)) {
-                    log.warn("Transaction {} is older than {} hours, marking as TIMEOUT",
-                            tx.getTxHash(), MAX_MONITORING_AGE_HOURS);
-                    transactionService.updateTransactionStatus(tx.getId(), "TIMEOUT");
-                    continue;
+                    // Route to appropriate blockchain checker
+                    switch (tx.getNetwork().toUpperCase()) {
+                        case "ETHEREUM", "SEPOLIA" -> checkEthereumTransaction(tx);
+                        case "XRP", "XRPL" -> checkXrpTransaction(tx);
+                        case "SOLANA", "SOL" -> checkSolanaTransaction(tx);
+                        default -> log.warn("Unknown network for transaction {}: {}", tx.getTxHash(), tx.getNetwork());
+                    }
+
+                } catch (Exception e) {
+                    log.error("Error monitoring transaction {}: {}", tx.getTxHash(), e.getMessage(), e);
                 }
-
-                // Route to appropriate blockchain checker
-                switch (tx.getNetwork().toUpperCase()) {
-                    case "ETHEREUM", "SEPOLIA" -> checkEthereumTransaction(tx);
-                    case "XRP", "XRPL" -> checkXrpTransaction(tx);
-                    case "SOLANA", "SOL" -> checkSolanaTransaction(tx);
-                    default -> log.warn("Unknown network for transaction {}: {}", tx.getTxHash(), tx.getNetwork());
-                }
-
-            } catch (Exception e) {
-                log.error("Error monitoring transaction {}: {}", tx.getTxHash(), e.getMessage(), e);
             }
         }
 
+        // Scan for external incoming transactions
+        scanForIncomingTransactions();
+
         log.debug("Transaction monitoring cycle completed");
+    }
+
+    /**
+     * Scans blockchain for incoming transactions that weren't initiated by the application
+     * This detects external funding like faucet transactions
+     */
+    private void scanForIncomingTransactions() {
+        try {
+            log.debug("Scanning for external incoming transactions");
+
+            // Get latest block number
+            BigInteger latestBlockNumber = web3j.ethBlockNumber().send().getBlockNumber();
+
+            // Scan last 10 blocks for incoming transactions to our users
+            BigInteger scanFromBlock = latestBlockNumber.subtract(BigInteger.valueOf(10));
+            if (scanFromBlock.compareTo(BigInteger.ZERO) < 0) {
+                scanFromBlock = BigInteger.ZERO;
+            }
+
+            // Get all user wallet addresses
+            List<User> users = userRepository.findAll();
+
+            for (User user : users) {
+                if (user.getWalletAddress() == null) continue;
+
+                scanEthereumIncomingTransactions(user, scanFromBlock, latestBlockNumber);
+            }
+
+        } catch (Exception e) {
+            log.error("Error scanning for incoming transactions: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Scans Ethereum blockchain for incoming transactions to a user's wallet
+     */
+    private void scanEthereumIncomingTransactions(User user, BigInteger fromBlock, BigInteger toBlock) {
+        try {
+            String userAddress = user.getWalletAddress().toLowerCase();
+
+            for (BigInteger blockNum = fromBlock; blockNum.compareTo(toBlock) <= 0; blockNum = blockNum.add(BigInteger.ONE)) {
+                EthBlock ethBlock = web3j.ethGetBlockByNumber(
+                    org.web3j.protocol.core.DefaultBlockParameter.valueOf(blockNum),
+                    true
+                ).send();
+
+                if (ethBlock.getBlock() == null) continue;
+
+                for (EthBlock.TransactionResult txResult : ethBlock.getBlock().getTransactions()) {
+                    org.web3j.protocol.core.methods.response.Transaction tx =
+                        (org.web3j.protocol.core.methods.response.Transaction) txResult.get();
+
+                    if (tx.getTo() == null) continue;
+
+                    // Check if this transaction is to our user's wallet
+                    if (tx.getTo().toLowerCase().equals(userAddress)) {
+                        String txHash = tx.getHash();
+
+                        // Check if we already have this transaction recorded
+                        Optional<Transaction> existing = transactionRepository.findByTxHash(txHash);
+                        if (existing.isPresent()) {
+                            continue; // Already recorded
+                        }
+
+                        // Calculate ETH amount
+                        BigDecimal ethAmount = Convert.fromWei(
+                            new BigDecimal(tx.getValue()),
+                            Convert.Unit.ETHER
+                        );
+
+                        // Record this as an external funding transaction
+                        log.info("Detected external incoming ETH transaction: {} -> {} ({} ETH)",
+                            tx.getFrom(), userAddress, ethAmount);
+
+                        transactionService.recordFundingTransaction(
+                            user.getId(),
+                            userAddress,
+                            ethAmount,
+                            "ETH",
+                            "ETHEREUM",
+                            txHash,
+                            "EXTERNAL_FUNDING"
+                        );
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error scanning Ethereum incoming transactions for user {}: {}",
+                user.getWalletAddress(), e.getMessage());
+        }
     }
 
     /**

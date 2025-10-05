@@ -336,7 +336,7 @@ class TransactionServiceTest {
 
         when(transactionRepository.findByUserIdAndTypeInOrderByTimestampDesc(
             userId,
-            List.of("FUNDING", "MINTING", "FAUCET_FUNDING")
+            List.of("FUNDING", "MINTING", "FAUCET_FUNDING", "EXTERNAL_FUNDING")
         )).thenReturn(Arrays.asList(usdcMinting, ethFunding));
 
         // When

@@ -354,6 +354,7 @@ public class TransactionService {
      *   <li>FUNDING: System wallet funding (ETH)</li>
      *   <li>MINTING: Test token minting (TEST-USDC, TEST-DAI)</li>
      *   <li>FAUCET_FUNDING: Faucet funding (XRP, SOL)</li>
+     *   <li>EXTERNAL_FUNDING: External funding from faucets or other sources</li>
      * </ul>
      * </p>
      *
@@ -363,7 +364,7 @@ public class TransactionService {
     public List<Transaction> getFundingTransactions(Long userId) {
         return transactionRepository.findByUserIdAndTypeInOrderByTimestampDesc(
             userId,
-            List.of("FUNDING", "MINTING", "FAUCET_FUNDING")
+            List.of("FUNDING", "MINTING", "FAUCET_FUNDING", "EXTERNAL_FUNDING")
         );
     }
 
