@@ -1,4 +1,4 @@
-# StableIPs Documentation Index
+# StableIPS Documentation Index
 
 ## 📚 Complete Documentation Guide
 

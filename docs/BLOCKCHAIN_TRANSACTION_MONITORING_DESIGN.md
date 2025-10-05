@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides a comprehensive design for blockchain transaction monitoring and recording across all funding operations in the StableIPs application. The design ensures **100% transaction visibility** for ETH funding, USDC/DAI minting, XRP faucet funding, and Solana devnet funding.
+This document provides a comprehensive design for blockchain transaction monitoring and recording across all funding operations in the StableIPS application. The design ensures **100% transaction visibility** for ETH funding, USDC/DAI minting, XRP faucet funding, and Solana devnet funding.
 
 **Design Goals:**
 - Capture ALL transaction hashes from blockchain operations

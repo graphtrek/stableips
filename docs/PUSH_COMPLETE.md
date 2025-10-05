@@ -105,7 +105,7 @@ Even though branches are identical, you can create a PR to demonstrate the workf
 ```bash
 # Make a small change on dev
 git checkout dev
-echo "# StableIPs - Demo Stablecoin Wallet" > README.md
+echo "# StableIPS - Demo Stablecoin Wallet" > README.md
 git add README.md
 git commit -m "docs: add README"
 git push origin dev

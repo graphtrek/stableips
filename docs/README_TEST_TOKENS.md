@@ -2,7 +2,7 @@
 
 ## Overview
 
-StableIPs now supports **automatic funding** of USDC and DAI test tokens for new users through custom ERC-20 token contracts deployed on Sepolia testnet.
+StableIPS now supports **automatic funding** of USDC and DAI test tokens for new users through custom ERC-20 token contracts deployed on Sepolia testnet.
 
 ## Features
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StableIPs - Multi-Chain Wallet Demo</title>
+    <title>StableIPS - Multi-Chain Wallet Demo</title>
     <style>
         * {
             margin: 0;
@@ -322,7 +322,7 @@
         <!-- Login Section -->
         <div class="login-section">
             <div class="brand">
-                <h1>StableIPs</h1>
+                <h1>StableIPS</h1>
                 <p class="tagline">Multi-Chain Wallet Demo</p>
             </div>
 
@@ -356,9 +356,9 @@
 
         <!-- Info Section -->
         <div class="info-section">
-            <h3>About StableIPs</h3>
+            <h3>About StableIPS</h3>
             <p>
-                StableIPs is a comprehensive multi-blockchain wallet demo application designed for developers
+                StableIPS is a comprehensive multi-blockchain wallet demo application designed for developers
                 and blockchain enthusiasts exploring cross-chain stablecoin transfers.
             </p>
             <p>

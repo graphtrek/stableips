@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This document provides specific blockchain integration recommendations for capturing transaction hashes from ALL funding operations in the StableIPs application.
+This document provides specific blockchain integration recommendations for capturing transaction hashes from ALL funding operations in the StableIPS application.
 
 **Critical Findings**:
 - ✅ Ethereum (ETH, USDC, DAI): Transaction hashes already available

@@ -149,7 +149,7 @@ git checkout -b dev
 ## 📊 What's Been Set Up
 
 ### Documentation
-- ✅ `CLAUDE.md` - Development guidelines tailored to StableIPs
+- ✅ `CLAUDE.md` - Development guidelines tailored to StableIPS
 - ✅ `docs/ARCHITECTURE.md` - Complete system architecture (400+ lines)
 - ✅ `docs/PROJECT_FOUNDATION.md` - Java 24 + Spring Boot + HTMX principles (800+ lines)
 - ✅ `docs/DAILY_PROGRESS.md` - Progress tracking with first entry

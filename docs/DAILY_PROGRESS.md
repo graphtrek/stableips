@@ -2,7 +2,7 @@
 
 > **Purpose**: Track daily development progress, decisions, blockers, and next steps. Maintain a historical record of project evolution.
 
-**Project**: StableIPs
+**Project**: StableIPS
 **Started**: 2025-10-03
 
 ---
@@ -24,7 +24,7 @@ At the end of each development session, add a new entry with:
 ### Work Completed
 - ✅ Initial project setup with Spring Boot 3.5.6 and Java 21
 - ✅ Created comprehensive project documentation:
-  - `CLAUDE.md` - Development guidelines tailored to StableIPs application
+  - `CLAUDE.md` - Development guidelines tailored to StableIPS application
   - `docs/PROJECT_FOUNDATION.md` - Java 24 + Spring Boot + HTMX principles
   - `docs/ARCHITECTURE.md` - Complete system architecture with diagrams and code examples
   - `docs/DAILY_PROGRESS.md` - Daily progress tracker (this file)
@@ -35,7 +35,7 @@ At the end of each development session, add a new entry with:
 
 ### Decisions Made
 - **Application Purpose**:
-  - StableIPs = Demo stablecoin wallet for Ethereum Sepolia testnet
+  - StableIPS = Demo stablecoin wallet for Ethereum Sepolia testnet
   - Transfer USDC/DAI tokens via Web3J
   - Session-based auth (demo only, no production security)
 
@@ -176,7 +176,7 @@ At the end of each development session, add a new entry with:
   - Updated `application.properties` with H2 configuration
   - Removed PostgreSQL dependencies
   - Simplified local development setup
-- ✅ Implemented complete StableIPs wallet MVP with TDD approach (~2 hours)
+- ✅ Implemented complete StableIPS wallet MVP with TDD approach (~2 hours)
   - Created `User` entity with wallet support
   - Created `Transaction` entity for transfer logging
   - Implemented `WalletService` with Web3J integration

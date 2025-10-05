@@ -1,6 +1,6 @@
 # Test Token Deployment Guide
 
-This guide explains how to deploy TestUSDC and TestDAI contracts to Sepolia testnet for the StableIPs application.
+This guide explains how to deploy TestUSDC and TestDAI contracts to Sepolia testnet for the StableIPS application.
 
 ## Why Deploy Test Tokens?
 
@@ -76,7 +76,7 @@ Example address: `0x1234567890123456789012345678901234567890`
 3. Click "Contract" → "Verify and Publish"
 4. Or use Remix plugin: "Etherscan - Contract Verification"
 
-### Step 8: Configure StableIPs Application
+### Step 8: Configure StableIPS Application
 
 Add these lines to `src/main/resources/application.properties`:
 
@@ -104,9 +104,9 @@ Replace `0xYOUR_TESTUSDC_ADDRESS` and `0xYOUR_TESTDAI_ADDRESS` with the addresse
 4. Click **"transact"**
 5. Check balance using `balanceOf` function
 
-### Method 2: Mint via StableIPs Application
+### Method 2: Mint via StableIPS Application
 
-Once configured, StableIPs will automatically mint tokens when creating new users.
+Once configured, StableIPS will automatically mint tokens when creating new users.
 
 Check the application logs for:
 ```
@@ -183,7 +183,7 @@ After deployment:
 1. ✅ Contracts deployed on Sepolia
 2. ✅ Addresses added to application.properties
 3. ✅ Test minting works in Remix
-4. → Restart StableIPs application
+4. → Restart StableIPS application
 5. → Create new user - should receive USDC/DAI automatically
 6. → Verify balances on wallet dashboard
 

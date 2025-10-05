@@ -19,7 +19,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StableIPs - Wallet Dashboard</title>
+    <title>StableIPS - Wallet Dashboard</title>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <style>
         * {
@@ -733,7 +733,7 @@
         <!-- Header -->
         <div class="header">
             <div class="header-left">
-                <h1>StableIPs Wallet</h1>
+                <h1>StableIPS Wallet</h1>
                 <p class="welcome-text">Welcome back, <strong>${user.getUsername()}</strong>!</p>
             </div>
             <form method="post" action="/logout" style="margin: 0;">

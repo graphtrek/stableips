@@ -1,4 +1,4 @@
-# StableIPs Architecture
+# StableIPS Architecture
 
 > **Demo stablecoin wallet application for Ethereum Sepolia testnet**
 
@@ -20,7 +20,7 @@
 
 ## System Overview
 
-**StableIPs** is a demonstration application for transferring stablecoins (USDC/DAI) on the Ethereum Sepolia testnet. It provides a simple web interface for:
+**StableIPS** is a demonstration application for transferring stablecoins (USDC/DAI) on the Ethereum Sepolia testnet. It provides a simple web interface for:
 
 - Creating demo wallet accounts
 - Viewing wallet balances
