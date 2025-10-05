@@ -12,6 +12,35 @@ import org.web3j.crypto.Credentials;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Service for managing cryptocurrency transactions across multiple blockchain networks.
+ *
+ * <p>This service handles transaction initiation, status tracking, and transaction history
+ * for users across Ethereum, XRP Ledger, and Solana networks. It coordinates with
+ * blockchain-specific services (WalletService, XrpWalletService, SolanaWalletService)
+ * to execute transfers and maintains a unified transaction log in the database.</p>
+ *
+ * <p>Key responsibilities:
+ * <ul>
+ *   <li>Multi-blockchain transaction initiation (Ethereum, XRP, Solana)</li>
+ *   <li>Transaction status management (PENDING, CONFIRMED, FAILED)</li>
+ *   <li>Transaction history tracking (sent, received, funding)</li>
+ *   <li>Token balance queries for ERC-20 tokens</li>
+ *   <li>System-initiated funding transaction logging</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Supported networks:
+ * <ul>
+ *   <li>ETHEREUM: ETH, USDC, DAI, TEST-USDC, TEST-DAI</li>
+ *   <li>XRP: Native XRP transfers</li>
+ *   <li>SOLANA: SOL transfers</li>
+ * </ul>
+ * </p>
+ *
+ * @author StableIPs Development Team
+ * @since 1.0
+ */
 @Service
 @Transactional
 public class TransactionService {
@@ -24,6 +53,15 @@ public class TransactionService {
     private final XrpWalletService xrpWalletService;
     private final SolanaWalletService solanaWalletService;
 
+    /**
+     * Constructs a TransactionService with required blockchain service dependencies.
+     *
+     * @param transactionRepository repository for transaction persistence and queries
+     * @param walletService service for Ethereum wallet operations and credentials
+     * @param contractService service for ERC-20 token contract interactions
+     * @param xrpWalletService service for XRP Ledger wallet operations
+     * @param solanaWalletService service for Solana blockchain operations
+     */
     public TransactionService(
         TransactionRepository transactionRepository,
         WalletService walletService,
@@ -38,24 +76,42 @@ public class TransactionService {
         this.solanaWalletService = solanaWalletService;
     }
 
+    /**
+     * Initiates a cryptocurrency transfer across any supported blockchain network.
+     *
+     * <p>This method routes the transfer to the appropriate blockchain service based on
+     * the token type. It supports Solana (SOL), XRP Ledger (XRP), and Ethereum-based
+     * tokens (ETH, USDC, DAI). The transaction is logged with PENDING status and saved
+     * to the database for tracking.</p>
+     *
+     * <p>Transfer routing:
+     * <ul>
+     *   <li>SOL: Routed to {@link SolanaWalletService}</li>
+     *   <li>XRP: Routed to {@link XrpWalletService}</li>
+     *   <li>ETH, USDC, DAI: Routed to {@link ContractService}</li>
+     * </ul>
+     * </p>
+     *
+     * @param user the authenticated user initiating the transfer
+     * @param recipient the destination wallet address (format varies by blockchain)
+     * @param amount the transfer amount in token units (e.g., 100.50 USDC)
+     * @param token the token symbol (SOL, XRP, ETH, USDC, DAI)
+     * @return the persisted Transaction entity with PENDING status and transaction hash
+     * @throws RuntimeException if the blockchain transfer fails or credentials are invalid
+     * @throws IllegalArgumentException if the token type is unsupported
+     */
     public Transaction initiateTransfer(User user, String recipient, BigDecimal amount, String token) {
         String txHash;
         String network;
 
-        // Handle SOL transfers
-        if ("SOL".equalsIgnoreCase(token)) {
-            txHash = solanaWalletService.sendSol(user.getSolanaPrivateKey(), recipient, amount);
+        if (isSolanaTransfer(token)) {
+            txHash = executeSolanaTransfer(user, recipient, amount);
             network = "SOLANA";
-        }
-        // Handle XRP transfers
-        else if ("XRP".equalsIgnoreCase(token)) {
-            txHash = xrpWalletService.sendXrp(user.getXrpSecret(), recipient, amount);
+        } else if (isXrpTransfer(token)) {
+            txHash = executeXrpTransfer(user, recipient, amount);
             network = "XRP";
-        }
-        // Handle Ethereum-based transfers (ETH, USDC, DAI)
-        else {
-            Credentials credentials = walletService.getUserCredentials(user.getWalletAddress());
-            txHash = contractService.transfer(credentials, recipient, amount, token);
+        } else {
+            txHash = executeEthereumTransfer(user, recipient, amount, token);
             network = "ETHEREUM";
         }
 
@@ -72,14 +128,57 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    private boolean isSolanaTransfer(String token) {
+        return "SOL".equalsIgnoreCase(token);
+    }
+
+    private boolean isXrpTransfer(String token) {
+        return "XRP".equalsIgnoreCase(token);
+    }
+
+    private String executeSolanaTransfer(User user, String recipient, BigDecimal amount) {
+        return solanaWalletService.sendSol(user.getSolanaPrivateKey(), recipient, amount);
+    }
+
+    private String executeXrpTransfer(User user, String recipient, BigDecimal amount) {
+        return xrpWalletService.sendXrp(user.getXrpSecret(), recipient, amount);
+    }
+
+    private String executeEthereumTransfer(User user, String recipient, BigDecimal amount, String token) {
+        Credentials credentials = walletService.getUserCredentials(user.getWalletAddress());
+        return contractService.transfer(credentials, recipient, amount, token);
+    }
+
+    /**
+     * Retrieves all transactions sent by a user.
+     *
+     * <p>Returns transactions where the user is the sender, ordered by timestamp
+     * descending (most recent first). This includes all blockchain networks.</p>
+     *
+     * @param userId the ID of the user whose sent transactions to retrieve
+     * @return list of sent transactions ordered by timestamp descending
+     */
     public List<Transaction> getUserTransactions(Long userId) {
         return transactionRepository.findByUserIdOrderByTimestampDesc(userId);
     }
 
     /**
-     * Get all transactions received by a user's wallets (Ethereum, XRP, Solana)
-     * @param user The user whose received transactions to fetch
-     * @return List of received transactions ordered by timestamp descending
+     * Retrieves all transactions received by a user across all their wallet addresses.
+     *
+     * <p>This method queries for transactions where the user's wallet addresses
+     * (Ethereum, XRP, Solana) are the recipient. It aggregates received transactions
+     * from all blockchain networks and sorts them by timestamp descending.</p>
+     *
+     * <p>Wallets checked:
+     * <ul>
+     *   <li>Ethereum wallet address (if present)</li>
+     *   <li>XRP wallet address (if present)</li>
+     *   <li>Solana public key (if present)</li>
+     * </ul>
+     * </p>
+     *
+     * @param user the user whose received transactions to fetch
+     * @return list of received transactions ordered by timestamp descending
      */
     public List<Transaction> getReceivedTransactions(User user) {
         List<Transaction> received = new java.util.ArrayList<>();
@@ -106,10 +205,18 @@ public class TransactionService {
     }
 
     /**
-     * Get all transactions for a user (both sent and received)
-     * Each transaction is marked with a "type" field for display purposes
-     * @param user The user whose transactions to fetch
-     * @return Combined list of sent and received transactions
+     * Retrieves all transactions for a user, categorized as sent and received.
+     *
+     * <p>This method provides a complete transaction history for a user by combining
+     * transactions they initiated (sent) with transactions they received across all
+     * their wallet addresses. The results are organized in a map with two keys:
+     * "sent" and "received".</p>
+     *
+     * <p>Use case: Dashboard displays showing complete transaction activity.</p>
+     *
+     * @param user the user whose complete transaction history to fetch
+     * @return map with keys "sent" and "received", each containing a list of transactions
+     *         ordered by timestamp descending
      */
     public java.util.Map<String, List<Transaction>> getAllUserTransactions(User user) {
         List<Transaction> sent = getUserTransactions(user.getId());
@@ -121,11 +228,36 @@ public class TransactionService {
         );
     }
 
+    /**
+     * Retrieves a transaction by its blockchain transaction hash.
+     *
+     * <p>This method looks up a transaction using its unique blockchain transaction hash
+     * (e.g., Ethereum tx hash, XRP tx hash, or Solana signature). The hash must exactly
+     * match a stored transaction.</p>
+     *
+     * @param txHash the blockchain transaction hash to search for
+     * @return the transaction with the specified hash
+     * @throws RuntimeException if no transaction is found with the given hash
+     */
     public Transaction getTransactionByHash(String txHash) {
         return transactionRepository.findByTxHash(txHash)
             .orElseThrow(() -> new RuntimeException("Transaction not found for hash: " + txHash));
     }
 
+    /**
+     * Updates the status of an existing transaction.
+     *
+     * <p>This method is used to update transaction status as it progresses through
+     * blockchain confirmation. Common status values: PENDING, CONFIRMED, FAILED.</p>
+     *
+     * <p>Note: This method is typically called by the TransactionMonitoringService
+     * to update transaction states based on blockchain confirmation status.</p>
+     *
+     * @param transactionId the database ID of the transaction to update
+     * @param status the new status value (e.g., "CONFIRMED", "FAILED")
+     * @return the updated transaction entity
+     * @throws RuntimeException if no transaction is found with the given ID
+     */
     public Transaction updateTransactionStatus(Long transactionId, String status) {
         Transaction transaction = transactionRepository.findById(transactionId)
             .orElseThrow(() -> new RuntimeException("Transaction not found for ID: " + transactionId));
@@ -134,20 +266,51 @@ public class TransactionService {
         return transactionRepository.save(transaction);
     }
 
+    /**
+     * Retrieves the token balance for a specific ERC-20 token at a wallet address.
+     *
+     * <p>This method queries the blockchain to get the current balance of an ERC-20
+     * token (USDC, DAI) at the specified Ethereum wallet address. For ETH balance,
+     * use {@link WalletService#getEthBalance(String)} instead.</p>
+     *
+     * @param walletAddress the Ethereum wallet address to check
+     * @param token the token symbol (USDC, DAI)
+     * @return the token balance in token units (e.g., 100.50 USDC)
+     */
     public BigDecimal getTokenBalance(String walletAddress, String token) {
         return contractService.getBalance(walletAddress, token);
     }
 
     /**
-     * Record a system-initiated funding transaction
-     * @param userId User receiving the funding
-     * @param recipientAddress Wallet address receiving the funds
-     * @param amount Amount of funding
-     * @param token Token type (ETH, XRP, SOL, TEST-USDC, TEST-DAI)
-     * @param network Network name (ETHEREUM, XRP, SOLANA)
-     * @param txHash Transaction hash (null if failed)
-     * @param fundingType Type of funding (FUNDING, MINTING, FAUCET_FUNDING)
-     * @return Saved transaction record
+     * Records a system-initiated funding transaction in the database.
+     *
+     * <p>This method creates a transaction record for system-initiated funding operations
+     * such as initial wallet funding, test token minting, or faucet requests. The transaction
+     * status is automatically determined based on whether a transaction hash is present.</p>
+     *
+     * <p>Funding types:
+     * <ul>
+     *   <li>FUNDING: ETH sent from system funding wallet</li>
+     *   <li>MINTING: Test tokens (TEST-USDC, TEST-DAI) minted to user wallet</li>
+     *   <li>FAUCET_FUNDING: XRP received from testnet faucet</li>
+     * </ul>
+     * </p>
+     *
+     * <p>Status determination:
+     * <ul>
+     *   <li>CONFIRMED: If txHash is present and non-empty</li>
+     *   <li>FAILED: If txHash is null or empty</li>
+     * </ul>
+     * </p>
+     *
+     * @param userId the ID of the user receiving the funding
+     * @param recipientAddress the wallet address receiving the funds
+     * @param amount the funding amount in token units
+     * @param token the token type (ETH, XRP, SOL, TEST-USDC, TEST-DAI)
+     * @param network the blockchain network (ETHEREUM, XRP, SOLANA)
+     * @param txHash the blockchain transaction hash (null if funding failed)
+     * @param fundingType the type of funding operation (FUNDING, MINTING, FAUCET_FUNDING)
+     * @return the saved transaction record with appropriate status
      */
     public Transaction recordFundingTransaction(
         Long userId,
@@ -180,10 +343,22 @@ public class TransactionService {
     }
 
     /**
-     * Get all funding transactions for a user
-     * Includes FUNDING, MINTING, and FAUCET_FUNDING types
-     * @param userId User ID
-     * @return List of funding transactions ordered by timestamp descending
+     * Retrieves all funding transactions for a user.
+     *
+     * <p>Returns all system-initiated funding operations for the specified user,
+     * including ETH funding, test token minting, and faucet funding. This excludes
+     * user-initiated transfers.</p>
+     *
+     * <p>Included transaction types:
+     * <ul>
+     *   <li>FUNDING: System wallet funding (ETH)</li>
+     *   <li>MINTING: Test token minting (TEST-USDC, TEST-DAI)</li>
+     *   <li>FAUCET_FUNDING: Faucet funding (XRP, SOL)</li>
+     * </ul>
+     * </p>
+     *
+     * @param userId the ID of the user whose funding transactions to retrieve
+     * @return list of funding transactions ordered by timestamp descending
      */
     public List<Transaction> getFundingTransactions(Long userId) {
         return transactionRepository.findByUserIdAndTypeInOrderByTimestampDesc(
@@ -193,10 +368,14 @@ public class TransactionService {
     }
 
     /**
-     * Get transactions filtered by type
-     * @param userId User ID
-     * @param type Transaction type (TRANSFER, FUNDING, MINTING, FAUCET_FUNDING)
-     * @return List of transactions ordered by timestamp descending
+     * Retrieves transactions filtered by a specific transaction type.
+     *
+     * <p>Allows filtering transactions by their type field. Common types include
+     * TRANSFER (user-initiated), FUNDING, MINTING, and FAUCET_FUNDING.</p>
+     *
+     * @param userId the ID of the user whose transactions to filter
+     * @param type the transaction type to filter by (TRANSFER, FUNDING, MINTING, FAUCET_FUNDING)
+     * @return list of matching transactions ordered by timestamp descending
      */
     public List<Transaction> getTransactionsByType(Long userId, String type) {
         return transactionRepository.findByUserIdAndTypeOrderByTimestampDesc(userId, type);

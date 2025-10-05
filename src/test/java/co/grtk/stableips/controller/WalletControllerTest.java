@@ -6,6 +6,7 @@ import co.grtk.stableips.service.AuthService;
 import co.grtk.stableips.service.TransactionService;
 import co.grtk.stableips.service.WalletService;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,12 +18,32 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Integration tests for WalletController.
+ *
+ * <p>This test class validates the wallet dashboard endpoint behavior, including
+ * authentication checks, balance display, and transaction history rendering.
+ * Uses MockMvc for HTTP simulation and MockBean for service layer isolation.</p>
+ *
+ * <p>Test coverage:
+ * <ul>
+ *   <li>Authenticated wallet dashboard display</li>
+ *   <li>Multi-blockchain balance rendering (ETH, USDC, DAI, XRP, SOL)</li>
+ *   <li>Transaction history display (sent, received, funding)</li>
+ *   <li>Unauthenticated access handling</li>
+ * </ul>
+ * </p>
+ *
+ * @author StableIPs Development Team
+ * @since 1.0
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -40,6 +61,19 @@ class WalletControllerTest {
     @MockBean
     private TransactionService transactionService;
 
+    /**
+     * Tests successful wallet dashboard rendering for authenticated user.
+     *
+     * <p>Verifies that:
+     * <ul>
+     *   <li>Authenticated users can access the wallet dashboard</li>
+     *   <li>All wallet balances are displayed (ETH, USDC, DAI, XRP, SOL)</li>
+     *   <li>Transaction history is properly categorized (sent, received, funding)</li>
+     *   <li>User information is passed to the view</li>
+     *   <li>Correct view template is rendered</li>
+     * </ul>
+     * </p>
+     */
     @Test
     void shouldShowWalletDashboard() throws Exception {
         // Given
@@ -58,16 +92,16 @@ class WalletControllerTest {
         BigDecimal xrpBalance = new BigDecimal("10.0");
         BigDecimal solBalance = new BigDecimal("2.0");
 
-        Transaction sentTx = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
-        Transaction receivedTx = new Transaction(2L, "0xWallet123", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
-        Transaction fundingTx = new Transaction(1L, "0xWallet123", new BigDecimal("10"), "ETH", "ETHEREUM", "0xHash3", "CONFIRMED");
+        Transaction sentTx = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xAbcdef123456", "CONFIRMED");
+        Transaction receivedTx = new Transaction(2L, "0xWallet123", BigDecimal.ONE, "DAI", "ETHEREUM", "0x9876543210ab", "PENDING");
+        Transaction fundingTx = new Transaction(1L, "0xWallet123", new BigDecimal("10"), "ETH", "ETHEREUM", "0xFedcba098765", "CONFIRMED");
         fundingTx.setType("FUNDING");
 
         List<Transaction> sentTransactions = Arrays.asList(sentTx);
         List<Transaction> receivedTransactions = Arrays.asList(receivedTx);
         List<Transaction> fundingTransactions = Arrays.asList(fundingTx);
 
-        java.util.Map<String, List<Transaction>> allTransactions = java.util.Map.of(
+        Map<String, List<Transaction>> allTransactions = Map.of(
             "sent", sentTransactions,
             "received", receivedTransactions
         );
@@ -75,8 +109,8 @@ class WalletControllerTest {
         when(authService.isAuthenticated(session)).thenReturn(true);
         when(authService.getCurrentUser(session)).thenReturn(user);
         when(walletService.getEthBalance(anyString())).thenReturn(ethBalance);
-        when(transactionService.getTokenBalance(anyString(), org.mockito.ArgumentMatchers.eq("USDC"))).thenReturn(usdcBalance);
-        when(transactionService.getTokenBalance(anyString(), org.mockito.ArgumentMatchers.eq("DAI"))).thenReturn(daiBalance);
+        when(transactionService.getTokenBalance(anyString(), ArgumentMatchers.eq("USDC"))).thenReturn(usdcBalance);
+        when(transactionService.getTokenBalance(anyString(), ArgumentMatchers.eq("DAI"))).thenReturn(daiBalance);
         when(walletService.getXrpBalance(anyString())).thenReturn(xrpBalance);
         when(walletService.getSolanaBalance(anyString())).thenReturn(solBalance);
         when(transactionService.getAllUserTransactions(user)).thenReturn(allTransactions);
@@ -97,6 +131,13 @@ class WalletControllerTest {
             .andExpect(model().attribute("fundingTransactions", fundingTransactions));
     }
 
+    /**
+     * Tests that unauthenticated users are redirected to login page.
+     *
+     * <p>Verifies that attempting to access the wallet dashboard without
+     * authentication results in a redirect to the login page, protecting
+     * sensitive financial information.</p>
+     */
     @Test
     void shouldRedirectToLoginWhenNotAuthenticated() throws Exception {
         // Given

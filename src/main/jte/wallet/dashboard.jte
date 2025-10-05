@@ -178,7 +178,7 @@
                             <td>${tx.getToken()}</td>
                             <td>
                                 <a href="${tx.getRecipient()}">
-                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                    @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                                 </a>
                             </td>
                             <td>+${tx.getAmount()}</td>
@@ -187,18 +187,18 @@
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
@@ -214,7 +214,7 @@
                             <td>${tx.getToken()}</td>
                             <td>
                                 <a href="${tx.getRecipient()}">
-                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                    @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                                 </a>
                             </td>
                             <td>-${tx.getAmount()}</td>
@@ -223,18 +223,18 @@
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
@@ -259,7 +259,7 @@
                             <td>${tx.getNetwork()}</td>
                             <td>${tx.getToken()}</td>
                             <td>
-                                ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                             </td>
                             <td>+${tx.getAmount()}</td>
                             <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
@@ -269,18 +269,18 @@
                                         <span class="synthetic-hash">Faucet Funding</span>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
@@ -317,7 +317,7 @@
                             <td>${tx.getToken()}</td>
                             <td>
                                 <a href="${tx.getRecipient()}">
-                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                    @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                                 </a>
                             </td>
                             <td><strong>+${tx.getAmount()}</strong></td>
@@ -326,18 +326,18 @@
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
@@ -374,7 +374,7 @@
                             <td>${tx.getToken()}</td>
                             <td>
                                 <a href="${tx.getRecipient()}">
-                                    ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                    @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                                 </a>
                             </td>
                             <td><strong>-${tx.getAmount()}</strong></td>
@@ -383,18 +383,18 @@
                                 @if(tx.getTxHash() != null && !tx.getTxHash().isEmpty())
                                     @if(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
@@ -442,7 +442,7 @@
                             <td>${tx.getNetwork()}</td>
                             <td><strong>${tx.getToken()}</strong></td>
                             <td>
-                                ${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}
+                                @if(tx.getRecipient().length() > 10)${tx.getRecipient().substring(0, 6)}...${tx.getRecipient().substring(tx.getRecipient().length() - 4)}@else${tx.getRecipient()}@endif
                             </td>
                             <td><strong>+${tx.getAmount()}</strong></td>
                             <td class="status-${tx.getStatus().toLowerCase()}">${tx.getStatus()}</td>
@@ -452,18 +452,18 @@
                                         <span class="synthetic-hash">Faucet Funding</span>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("ETHEREUM") || tx.getNetwork().equalsIgnoreCase("SEPOLIA"))
                                         <a href="https://sepolia.etherscan.io/tx/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("XRP") || tx.getNetwork().equalsIgnoreCase("XRPL"))
                                         <a href="https://testnet.xrpl.org/transactions/${tx.getTxHash()}" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @elseif(tx.getNetwork().equalsIgnoreCase("SOLANA") || tx.getNetwork().equalsIgnoreCase("SOL"))
                                         <a href="https://explorer.solana.com/tx/${tx.getTxHash()}?cluster=devnet" target="_blank">
-                                            ${tx.getTxHash().substring(0, 8)}...
+                                            ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                         </a>
                                     @else
-                                        ${tx.getTxHash().substring(0, 8)}...
+                                        ${tx.getTxHash().substring(0, Math.min(8, tx.getTxHash().length()))}...
                                     @endif
                                 @else
                                     Pending...
