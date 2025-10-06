@@ -33,7 +33,6 @@ import java.util.Map;
  *   <li>XRP wallet regeneration for legacy data migration</li>
  *   <li>Test token funding (USDC, DAI) for development/testing</li>
  * </ul>
- * </p>
  *
  * <p>All endpoints require user authentication via session.</p>
  *
@@ -211,7 +210,6 @@ public class WalletController {
      *   <li>token.funding.initial-usdc (default: 1000 TEST-USDC)</li>
      *   <li>token.funding.initial-dai (default: 1000 TEST-DAI)</li>
      * </ul>
-     * </p>
      *
      * <p>The minting transactions are logged in the database with type "MINTING"
      * for transaction history tracking.</p>

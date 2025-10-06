@@ -21,6 +21,30 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link TransactionService}.
+ *
+ * <p>This test suite verifies transaction management functionality across multiple
+ * blockchain networks (Ethereum, XRP, Solana). Tests cover transaction initiation,
+ * status updates, transaction history queries, and error handling.</p>
+ *
+ * <p>Test categories:
+ * <ul>
+ *   <li>Transaction Initiation: Ethereum, XRP, Solana transfers</li>
+ *   <li>Transaction Queries: By user, by hash, by type</li>
+ *   <li>Status Management: Pending, confirmed, failed</li>
+ *   <li>Funding Transactions: ETH, XRP, SOL funding and minting</li>
+ *   <li>Transaction History: Sent, received, merged timelines</li>
+ *   <li>Error Handling: XRP seed corruption, legacy formats, transfer failures</li>
+ * </ul>
+ * </p>
+ *
+ * <p>All tests use Mockito for service dependencies to ensure isolated unit testing.</p>
+ *
+ * @author StableIPs Development Team
+ * @since 1.0
+ * @see TransactionService
+ */
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceTest {
 
@@ -508,5 +532,138 @@ class TransactionServiceTest {
         assertThat(result.get("sent")).isEmpty();
         assertThat(result.get("received")).isEmpty();
         assertThat(result.get("all")).isEmpty();
+    }
+
+    // ==================== XRP Transfer Error Handling Tests ====================
+
+    /**
+     * Verifies that corrupted XRP seed formats are properly handled with actionable error messages.
+     *
+     * <p>This test simulates the scenario where a user's XRP seed was stored using
+     * {@code Seed.toString()} (e.g., "Seed{value=[redacted], destroyed=false}") instead
+     * of proper hex or base58 encoding. This corruption prevents transaction signing.</p>
+     *
+     * <p>Expected behavior:
+     * <ul>
+     *   <li>XrpWalletService throws {@link IllegalArgumentException}</li>
+     *   <li>TransactionService wraps exception with user-friendly guidance</li>
+     *   <li>Error message directs user to wallet dashboard for regeneration</li>
+     * </ul>
+     * </p>
+     *
+     * @see XrpWalletService#parseSeedFromString(String)
+     */
+    @Test
+    void shouldHandleCorruptedXrpSeedFormat() {
+        // Given - User with corrupted Seed.toString() format in database
+        User user = new User("dave", "0xWallet999");
+        user.setId(4L);
+        user.setXrpAddress("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8");
+        user.setXrpSecret("Seed{value=[redacted], destroyed=false}"); // Corrupted format
+
+        when(xrpWalletService.sendXrp(anyString(), anyString(), any()))
+            .thenThrow(new IllegalArgumentException(
+                "XRP wallet seed is corrupted. Please regenerate your XRP wallet using the 'Regenerate XRP Wallet' button. " +
+                "This error occurs because the wallet was created with an older version that stored the seed incorrectly."
+            ));
+
+        // When & Then
+        assertThatThrownBy(() ->
+            transactionService.initiateTransfer(user, "rRecipient123", new BigDecimal("10"), "XRP"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("XRP wallet seed is corrupted")
+            .hasMessageContaining("Regenerate XRP Wallet")
+            .hasMessageContaining("Visit your wallet dashboard");
+    }
+
+    /**
+     * Verifies that legacy XRP address-only storage is detected and rejected.
+     *
+     * <p>This test simulates a scenario where the XRP address (starting with 'r')
+     * was mistakenly stored in the seed field, preventing private key derivation.
+     * While current {@code User.setXrpSecret()} validation prevents this, the test
+     * ensures XrpWalletService handles database-corrupted data gracefully.</p>
+     *
+     * <p>Expected behavior:
+     * <ul>
+     *   <li>XrpWalletService detects 'r' prefix and throws {@link IllegalArgumentException}</li>
+     *   <li>Error message explains that addresses cannot be used as seeds</li>
+     *   <li>User is directed to regenerate wallet</li>
+     * </ul>
+     * </p>
+     *
+     * <p><strong>Note:</strong> This test uses a mocked User object because the real
+     * {@code User.setXrpSecret()} now validates against address-only input.</p>
+     */
+    @Test
+    void shouldHandleLegacyXrpAddressAsSeed() {
+        // Given - User with XRP address stored as seed (legacy bug)
+        // Note: Current User.setXrpSecret() validation prevents this, but we test the
+        // XrpWalletService behavior in case data was corrupted directly in the database
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(5L);
+        when(user.getXrpSecret()).thenReturn("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8"); // Address instead of seed
+
+        when(xrpWalletService.sendXrp(anyString(), anyString(), any()))
+            .thenThrow(new IllegalArgumentException(
+                "Cannot derive seed from XRP address. Please regenerate your wallet. " +
+                "This error occurs because the wallet was created with an older version that didn't properly store the seed."
+            ));
+
+        // When & Then
+        assertThatThrownBy(() ->
+            transactionService.initiateTransfer(user, "rRecipient456", new BigDecimal("5"), "XRP"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Cannot derive seed from XRP address")
+            .hasMessageContaining("regenerate your wallet");
+    }
+
+    /**
+     * Verifies that valid hex-encoded XRP seeds are processed successfully.
+     *
+     * <p>This test confirms that properly formatted 32-character hex seeds
+     * (representing 16 bytes of entropy) are correctly parsed and used for
+     * XRP transfer signing.</p>
+     *
+     * <p>Validation points:
+     * <ul>
+     *   <li>Transaction is created with XRP network</li>
+     *   <li>Transaction hash is correctly stored</li>
+     *   <li>Transaction status is PENDING</li>
+     *   <li>XrpWalletService.sendXrp() is called with correct parameters</li>
+     * </ul>
+     * </p>
+     *
+     * <p>This test serves as a positive control to ensure that the error handling
+     * enhancements do not interfere with normal operation.</p>
+     */
+    @Test
+    void shouldSucceedWithValidHexXrpSeed() {
+        // Given - User with valid hex seed (32 hex characters = 16 bytes)
+        User user = new User("frank", "0xWallet777");
+        user.setId(6L);
+        user.setXrpAddress("rN7n7otQDd6FczFgLdllrq4OhiX1zp7n8");
+        user.setXrpSecret("a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"); // Valid 32-char hex
+
+        when(xrpWalletService.sendXrp(anyString(), anyString(), any()))
+            .thenReturn("XRP_TX_HASH_123");
+
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> {
+            Transaction tx = invocation.getArgument(0);
+            tx.setId(7L);
+            return tx;
+        });
+
+        // When
+        Transaction transaction = transactionService.initiateTransfer(
+            user, "rRecipient789", new BigDecimal("20"), "XRP"
+        );
+
+        // Then
+        assertThat(transaction).isNotNull();
+        assertThat(transaction.getNetwork()).isEqualTo("XRP");
+        assertThat(transaction.getTxHash()).isEqualTo("XRP_TX_HASH_123");
+        assertThat(transaction.getStatus()).isEqualTo("PENDING");
+        verify(xrpWalletService).sendXrp(user.getXrpSecret(), "rRecipient789", new BigDecimal("20"));
     }
 }

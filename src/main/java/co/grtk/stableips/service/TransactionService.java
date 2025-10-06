@@ -29,7 +29,6 @@ import java.util.Map;
  *   <li>Token balance queries for ERC-20 tokens</li>
  *   <li>System-initiated funding transaction logging</li>
  * </ul>
- * </p>
  *
  * <p>Supported networks:
  * <ul>
@@ -37,7 +36,6 @@ import java.util.Map;
  *   <li>XRP: Native XRP transfers</li>
  *   <li>SOLANA: SOL transfers</li>
  * </ul>
- * </p>
  *
  * @author StableIPs Development Team
  * @since 1.0
@@ -91,7 +89,6 @@ public class TransactionService {
      *   <li>XRP: Routed to {@link XrpWalletService}</li>
      *   <li>ETH, USDC, DAI: Routed to {@link ContractService}</li>
      * </ul>
-     * </p>
      *
      * @param user the authenticated user initiating the transfer
      * @param recipient the destination wallet address (format varies by blockchain)
@@ -141,8 +138,43 @@ public class TransactionService {
         return solanaWalletService.sendSol(user.getSolanaPrivateKey(), recipient, amount);
     }
 
+    /**
+     * Executes an XRP transfer using the XrpWalletService with enhanced error handling.
+     *
+     * <p>This method wraps {@link XrpWalletService#sendXrp(String, String, BigDecimal)}
+     * to provide user-friendly error messages when seed parsing failures occur. It catches
+     * {@link IllegalArgumentException} from corrupted seed formats and re-throws with
+     * additional context directing users to the wallet dashboard.</p>
+     *
+     * <p>Common error scenarios handled:
+     * <ul>
+     *   <li>Corrupted seed format (Seed.toString() output)</li>
+     *   <li>Legacy address-only storage</li>
+     *   <li>Unsupported seed encoding</li>
+     * </ul>
+     * </p>
+     *
+     * @param user the user initiating the transfer (must have valid XRP secret)
+     * @param recipient the destination XRP address
+     * @param amount the transfer amount in XRP units
+     * @return the blockchain transaction hash
+     * @throws IllegalArgumentException if the user's XRP seed is corrupted or invalid,
+     *         with actionable error message directing to wallet regeneration
+     * @throws RuntimeException if the XRP transfer fails for other reasons (network error,
+     *         insufficient balance, invalid recipient address)
+     */
     private String executeXrpTransfer(User user, String recipient, BigDecimal amount) {
-        return xrpWalletService.sendXrp(user.getXrpSecret(), recipient, amount);
+        try {
+            return xrpWalletService.sendXrp(user.getXrpSecret(), recipient, amount);
+        } catch (IllegalArgumentException e) {
+            // Re-throw with user-friendly context for seed parsing errors
+            log.error("XRP transfer failed for user {}: {}", user.getId(), e.getMessage());
+            throw new IllegalArgumentException(
+                "XRP transfer failed: " + e.getMessage() +
+                " Visit your wallet dashboard to regenerate your XRP wallet.",
+                e
+            );
+        }
     }
 
     private String executeEthereumTransfer(User user, String recipient, BigDecimal amount, String token) {
@@ -176,7 +208,6 @@ public class TransactionService {
      *   <li>XRP wallet address (if present)</li>
      *   <li>Solana public key (if present)</li>
      * </ul>
-     * </p>
      *
      * @param user the user whose received transactions to fetch
      * @return list of received transactions ordered by timestamp descending
@@ -325,14 +356,12 @@ public class TransactionService {
      *   <li>MINTING: Test tokens (TEST-USDC, TEST-DAI) minted to user wallet</li>
      *   <li>FAUCET_FUNDING: XRP received from testnet faucet</li>
      * </ul>
-     * </p>
      *
      * <p>Status determination:
      * <ul>
      *   <li>CONFIRMED: If txHash is present and non-empty</li>
      *   <li>FAILED: If txHash is null or empty</li>
      * </ul>
-     * </p>
      *
      * @param userId the ID of the user receiving the funding
      * @param recipientAddress the wallet address receiving the funds
@@ -387,7 +416,6 @@ public class TransactionService {
      *   <li>FAUCET_FUNDING: Faucet funding (XRP, SOL)</li>
      *   <li>EXTERNAL_FUNDING: External funding from faucets or other sources</li>
      * </ul>
-     * </p>
      *
      * @param userId the ID of the user whose funding transactions to retrieve
      * @return list of funding transactions ordered by timestamp descending
