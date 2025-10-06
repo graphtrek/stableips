@@ -72,15 +72,23 @@ public class WalletController {
     }
 
     /**
-     * Displays the main wallet dashboard page.
+     * Displays the main wallet dashboard page with complete transaction history.
      *
-     * <p>This endpoint renders a comprehensive wallet dashboard showing:
+     * <p>This endpoint renders a comprehensive wallet dashboard showing:</p>
+     *
      * <ul>
      *   <li>Wallet addresses for Ethereum, XRP Ledger, and Solana</li>
-     *   <li>Current balances for ETH, USDC, DAI, XRP, and SOL</li>
-     *   <li>Transaction history categorized as sent, received, and funding</li>
+     *   <li>Current balances for ETH, USDC, DAI, XRP, and SOL (real-time blockchain queries)</li>
+     *   <li>Complete transaction history including sent, received, and funding transactions</li>
      * </ul>
-     * </p>
+     *
+     * <p><strong>Transaction History Structure:</strong></p>
+     * <ul>
+     *   <li><code>allTransactions</code>: Unified timeline of ALL transactions (sent + received + funding) sorted by timestamp descending</li>
+     *   <li><code>sentTransactions</code>: User-initiated transfers only</li>
+     *   <li><code>receivedTransactions</code>: Incoming transfers from external sources</li>
+     *   <li><code>fundingTransactions</code>: System-initiated funding (ETH funding, test token minting, faucet requests)</li>
+     * </ul>
      *
      * <p>Balances are fetched in real-time from blockchain networks. If a balance
      * query fails, it defaults to zero to prevent page errors.</p>
@@ -108,13 +116,19 @@ public class WalletController {
         BigDecimal xrpBalance = walletService.getXrpBalance(xrpAddress);
         BigDecimal solBalance = walletService.getSolanaBalance(solanaPublicKey);
 
-        // Get both sent and received transactions
-        Map<String, List<Transaction>> allTransactions =
+        // Fetch categorized transactions (sent, received, and merged timeline)
+        Map<String, List<Transaction>> transactionsByCategory =
             transactionService.getAllUserTransactions(user);
 
-        // Get funding transactions (ETH funding, token minting, XRP faucet funding)
+        // Fetch system-initiated funding transactions separately
         List<Transaction> fundingTransactions =
             transactionService.getFundingTransactions(user.getId());
+
+        // Create complete unified timeline: sent + received + funding
+        List<Transaction> completeTransactionHistory = mergeAllTransactions(
+            transactionsByCategory.get("all"),
+            fundingTransactions
+        );
 
         model.addAttribute("user", user);
         model.addAttribute("ethBalance", ethBalance);
@@ -122,11 +136,34 @@ public class WalletController {
         model.addAttribute("daiBalance", daiBalance);
         model.addAttribute("xrpBalance", xrpBalance);
         model.addAttribute("solBalance", solBalance);
-        model.addAttribute("sentTransactions", allTransactions.get("sent"));
-        model.addAttribute("receivedTransactions", allTransactions.get("received"));
+        model.addAttribute("allTransactions", completeTransactionHistory);
+        model.addAttribute("sentTransactions", transactionsByCategory.get("sent"));
+        model.addAttribute("receivedTransactions", transactionsByCategory.get("received"));
         model.addAttribute("fundingTransactions", fundingTransactions);
 
         return "wallet/dashboard";
+    }
+
+    /**
+     * Merges user-initiated transactions with funding transactions into a unified timeline.
+     *
+     * <p>This method combines sent/received transactions with system-initiated funding
+     * transactions and sorts them by timestamp descending (newest first) to provide
+     * a complete chronological transaction history.</p>
+     *
+     * @param userTransactions sent and received transactions already merged
+     * @param fundingTransactions system-initiated funding operations
+     * @return complete transaction list sorted by timestamp descending
+     */
+    private List<Transaction> mergeAllTransactions(
+        List<Transaction> userTransactions,
+        List<Transaction> fundingTransactions
+    ) {
+        List<Transaction> mergedList = new java.util.ArrayList<>();
+        mergedList.addAll(userTransactions);
+        mergedList.addAll(fundingTransactions);
+        mergedList.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
+        return mergedList;
     }
 
     /**

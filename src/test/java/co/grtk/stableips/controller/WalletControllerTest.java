@@ -104,9 +104,13 @@ class WalletControllerTest {
         List<Transaction> receivedTransactions = Arrays.asList(receivedTx);
         List<Transaction> fundingTransactions = Arrays.asList(fundingTx);
 
+        // Combined transactions sorted by timestamp (sent + received)
+        List<Transaction> combinedTransactions = Arrays.asList(sentTx, receivedTx);
+
         Map<String, List<Transaction>> allTransactions = Map.of(
             "sent", sentTransactions,
-            "received", receivedTransactions
+            "received", receivedTransactions,
+            "all", combinedTransactions  // Added "all" key with combined sorted list
         );
 
         when(authService.isAuthenticated(session)).thenReturn(true);
@@ -131,7 +135,8 @@ class WalletControllerTest {
             .andExpect(model().attribute("solBalance", solBalance))
             .andExpect(model().attribute("sentTransactions", sentTransactions))
             .andExpect(model().attribute("receivedTransactions", receivedTransactions))
-            .andExpect(model().attribute("fundingTransactions", fundingTransactions));
+            .andExpect(model().attribute("fundingTransactions", fundingTransactions))
+            .andExpect(model().attributeExists("allTransactions"));  // Verify allTransactions exists
     }
 
     /**

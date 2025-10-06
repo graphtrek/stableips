@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.5.6'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'gg.jte.gradle' version '3.1.16'
+    id 'jacoco'
 }
 
 
@@ -53,6 +54,7 @@ jte {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport // Generate report after tests
 }
 
 // Load environment variables from env.properties for bootRun
@@ -71,4 +73,77 @@ tasks.named('bootRun') {
             }
         }
     }
+}
+
+// JaCoCo Configuration
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, exclude: [
+            '**/Application.class',
+            '**/config/**',
+            '**/dto/**',
+            '**/model/**'
+        ])
+    }))
+}
+
+// Coverage verification
+jacocoTestCoverageVerification {
+    dependsOn test
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80 // Overall 80%
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['co.grtk.stableips.service.*']
+            limit {
+                counter = 'LINE'
+                minimum = 0.85 // Services 85%
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['co.grtk.stableips.controller.*']
+            limit {
+                counter = 'LINE'
+                minimum = 0.70 // Controllers 70%
+            }
+        }
+
+        rule {
+            element = 'CLASS'
+            includes = ['co.grtk.stableips.repository.*']
+            limit {
+                counter = 'LINE'
+                minimum = 0.60 // Repositories 60%
+            }
+        }
+    }
+
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, exclude: [
+            '**/Application.class',
+            '**/config/**',
+            '**/dto/**',
+            '**/model/**'
+        ])
+    }))
 }

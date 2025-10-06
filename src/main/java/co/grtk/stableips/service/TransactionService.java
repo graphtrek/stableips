@@ -11,6 +11,7 @@ import org.web3j.crypto.Credentials;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for managing cryptocurrency transactions across multiple blockchain networks.
@@ -199,33 +200,63 @@ public class TransactionService {
         }
 
         // Sort all received transactions by timestamp descending
-        received.sort((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()));
+        received.sort(createTimestampComparator());
 
         return received;
     }
 
     /**
-     * Retrieves all transactions for a user, categorized as sent and received.
+     * Retrieves all transactions for a user, categorized by direction and combined.
      *
-     * <p>This method provides a complete transaction history for a user by combining
-     * transactions they initiated (sent) with transactions they received across all
-     * their wallet addresses. The results are organized in a map with two keys:
-     * "sent" and "received".</p>
+     * <p>This method provides a complete transaction history for a user by fetching
+     * transactions they initiated (sent) and transactions they received across all
+     * their wallet addresses (Ethereum, XRP, Solana). The results are organized in
+     * a map with three keys:</p>
      *
-     * <p>Use case: Dashboard displays showing complete transaction activity.</p>
+     * <ul>
+     *   <li><strong>sent</strong>: User-initiated transfers ordered by timestamp descending</li>
+     *   <li><strong>received</strong>: Incoming transfers across all wallets ordered by timestamp descending</li>
+     *   <li><strong>all</strong>: Combined sent + received transactions merged and sorted by timestamp descending</li>
+     * </ul>
+     *
+     * <p>The "all" key provides a unified transaction timeline useful for dashboard displays.</p>
+     *
+     * <p><strong>Note</strong>: This method does NOT include funding transactions (FUNDING, MINTING, FAUCET_FUNDING).
+     * To include those, use {@link #getFundingTransactions(Long)} separately.</p>
+     *
+     * <p>Use case: Dashboard displays showing complete user-initiated and received transaction activity.</p>
      *
      * @param user the user whose complete transaction history to fetch
-     * @return map with keys "sent" and "received", each containing a list of transactions
-     *         ordered by timestamp descending
+     * @return map with three keys ("sent", "received", "all"), each containing a list of
+     *         transactions ordered by timestamp descending (newest first)
      */
-    public java.util.Map<String, List<Transaction>> getAllUserTransactions(User user) {
+    public Map<String, List<Transaction>> getAllUserTransactions(User user) {
         List<Transaction> sent = getUserTransactions(user.getId());
         List<Transaction> received = getReceivedTransactions(user);
 
-        return java.util.Map.of(
+        // Merge sent and received transactions into a unified timeline
+        List<Transaction> mergedTransactions = new java.util.ArrayList<>();
+        mergedTransactions.addAll(sent);
+        mergedTransactions.addAll(received);
+        mergedTransactions.sort(createTimestampComparator());
+
+        return Map.of(
             "sent", sent,
-            "received", received
+            "received", received,
+            "all", mergedTransactions
         );
+    }
+
+    /**
+     * Creates a comparator for sorting transactions by timestamp in descending order.
+     *
+     * <p>This comparator ensures transactions are sorted from newest to oldest,
+     * which is the standard display order for transaction histories.</p>
+     *
+     * @return comparator that sorts transactions by timestamp descending
+     */
+    private java.util.Comparator<Transaction> createTimestampComparator() {
+        return (a, b) -> b.getTimestamp().compareTo(a.getTimestamp());
     }
 
     /**

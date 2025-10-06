@@ -408,4 +408,105 @@ class TransactionServiceTest {
         assertThat(funding).hasSize(1);
         assertThat(funding.get(0).getTxHash()).isEqualTo("0xFunding1");
     }
+
+    // ==================== getAllUserTransactions Tests ====================
+
+    @Test
+    void shouldReturnAllUserTransactionsWithThreeKeys() {
+        // Given
+        User user = new User("alice", "0xWallet123");
+        user.setId(1L);
+
+        // Sent transactions
+        Transaction sentTx1 = new Transaction(
+            1L, "0xRecipient1", new BigDecimal("50"), "USDC", "ETHEREUM", "0xSent1", "CONFIRMED"
+        );
+        Transaction sentTx2 = new Transaction(
+            1L, "0xRecipient2", new BigDecimal("25"), "DAI", "ETHEREUM", "0xSent2", "PENDING"
+        );
+
+        // Received transactions
+        Transaction receivedTx1 = new Transaction(
+            2L, "0xWallet123", new BigDecimal("100"), "USDC", "ETHEREUM", "0xReceived1", "CONFIRMED"
+        );
+        receivedTx1.setType("TRANSFER");
+
+        when(transactionRepository.findByUserIdOrderByTimestampDesc(1L))
+            .thenReturn(Arrays.asList(sentTx2, sentTx1));
+
+        when(transactionRepository.findByRecipientOrderByTimestampDesc("0xWallet123"))
+            .thenReturn(List.of(receivedTx1));
+
+        // When
+        java.util.Map<String, List<Transaction>> result = transactionService.getAllUserTransactions(user);
+
+        // Then
+        assertThat(result).containsKeys("sent", "received", "all");
+        assertThat(result.get("sent")).hasSize(2);
+        assertThat(result.get("received")).hasSize(1);
+        assertThat(result.get("all")).hasSize(3);
+    }
+
+    @Test
+    void shouldSortAllTransactionsByTimestampDescending() {
+        // Given
+        User user = new User("bob", "0xWallet456");
+        user.setId(2L);
+
+        // Create transactions with different timestamps
+        Transaction oldestTx = new Transaction(
+            2L, "0xRecipient", new BigDecimal("10"), "USDC", "ETHEREUM", "0xOldest", "CONFIRMED"
+        );
+        oldestTx.setTimestamp(java.time.LocalDateTime.of(2025, 1, 1, 10, 0));
+
+        Transaction newestTx = new Transaction(
+            3L, "0xWallet456", new BigDecimal("20"), "DAI", "ETHEREUM", "0xNewest", "CONFIRMED"
+        );
+        newestTx.setTimestamp(java.time.LocalDateTime.of(2025, 1, 3, 10, 0));
+        newestTx.setType("TRANSFER");
+
+        Transaction middleTx = new Transaction(
+            2L, "0xRecipient2", new BigDecimal("15"), "USDC", "ETHEREUM", "0xMiddle", "PENDING"
+        );
+        middleTx.setTimestamp(java.time.LocalDateTime.of(2025, 1, 2, 10, 0));
+
+        when(transactionRepository.findByUserIdOrderByTimestampDesc(2L))
+            .thenReturn(Arrays.asList(middleTx, oldestTx));
+
+        when(transactionRepository.findByRecipientOrderByTimestampDesc("0xWallet456"))
+            .thenReturn(List.of(newestTx));
+
+        // When
+        java.util.Map<String, List<Transaction>> result = transactionService.getAllUserTransactions(user);
+
+        // Then
+        List<Transaction> allTransactions = result.get("all");
+        assertThat(allTransactions).hasSize(3);
+        // Should be sorted by timestamp descending (newest first)
+        assertThat(allTransactions.get(0).getTxHash()).isEqualTo("0xNewest");
+        assertThat(allTransactions.get(1).getTxHash()).isEqualTo("0xMiddle");
+        assertThat(allTransactions.get(2).getTxHash()).isEqualTo("0xOldest");
+    }
+
+    @Test
+    void shouldHandleEmptyTransactionsInGetAllUserTransactions() {
+        // Given
+        User user = new User("charlie", "0xWallet789");
+        user.setId(3L);
+
+        when(transactionRepository.findByUserIdOrderByTimestampDesc(3L))
+            .thenReturn(List.of());
+
+        when(transactionRepository.findByRecipientOrderByTimestampDesc("0xWallet789"))
+            .thenReturn(List.of());
+
+        // When
+        java.util.Map<String, List<Transaction>> result = transactionService.getAllUserTransactions(user);
+
+        // Then
+        assertThat(result).containsKeys("sent", "received", "all");
+        assertThat(result.get("sent")).isEmpty();
+        assertThat(result.get("received")).isEmpty();
+        assertThat(result.get("all")).isEmpty();
+    }
 }
