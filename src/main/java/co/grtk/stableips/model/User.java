@@ -106,6 +106,12 @@ public class User {
     }
 
     public void setXrpSecret(String xrpSecret) {
+        // Validation: XRP secret should never be an address (starting with 'r')
+        if (xrpSecret != null && xrpSecret.startsWith("r")) {
+            throw new IllegalArgumentException(
+                "XRP secret cannot be an address. Expected seed (starts with 's') or hex, but got: " + xrpSecret
+            );
+        }
         this.xrpSecret = xrpSecret;
     }
 

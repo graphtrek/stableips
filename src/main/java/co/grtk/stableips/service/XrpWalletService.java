@@ -10,6 +10,7 @@ import org.xrpl.xrpl4j.client.faucet.FaucetClient;
 import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
 import org.xrpl.xrpl4j.crypto.keys.Seed;
 import org.xrpl.xrpl4j.crypto.keys.Base58EncodedSecret;
+import org.xrpl.xrpl4j.crypto.keys.Entropy;
 import org.xrpl.xrpl4j.crypto.signing.bc.BcSignatureService;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
@@ -52,17 +53,21 @@ public class XrpWalletService {
      * Generate a new XRP wallet (address + secret)
      */
     public XrpWallet generateWallet() {
+        // Generate a random ED25519 seed
         Seed seed = Seed.ed25519Seed();
         var keyPair = seed.deriveKeyPair();
         Address address = keyPair.publicKey().deriveAddress();
 
-        // Cache seed for later use (in production, store encrypted in DB)
-        String seedString = seed.toString();
+        // Get the 16-byte seed entropy and store as hex (32 characters)
+        // In production, this should be encrypted before storage
+        String seedHex = seed.decodedSeed().bytes().hexValue();
+
+        // Cache seed for later use
         seedCache.put(address.value(), seed);
 
         return new XrpWallet(
             address.value(),
-            seedString // Store the seed as string
+            seedHex // Store 16-byte seed as hex (32 characters)
         );
     }
 
@@ -203,13 +208,31 @@ public class XrpWalletService {
                     "This error occurs because the wallet was created with an older version that didn't properly store the seed."
                 );
             }
-            // Otherwise try as hex or other format
+            // Try parsing as hex-encoded seed (32 character hex = 16 bytes)
+            if (seedString.matches("[0-9a-fA-F]{32}")) {
+                byte[] seedBytes = hexStringToByteArray(seedString);
+                return Seed.ed25519SeedFromEntropy(Entropy.of(seedBytes));
+            }
+            // Otherwise unsupported format
             throw new IllegalArgumentException("Unsupported seed format: " + seedString);
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse seed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Convert hex string to byte array
+     */
+    private static byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
 
     /**
