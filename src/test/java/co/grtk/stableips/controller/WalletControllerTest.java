@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>Test coverage:
  * <ul>
  *   <li>Authenticated wallet dashboard display</li>
- *   <li>Multi-blockchain balance rendering (ETH, USDC, DAI, XRP, SOL)</li>
+ *   <li>Multi-blockchain balance rendering (ETH, USDC, EURC, XRP, SOL)</li>
  *   <li>Transaction history display (sent, received, funding)</li>
  *   <li>Unauthenticated access handling</li>
  * </ul>
@@ -70,7 +70,7 @@ class WalletControllerTest {
      * <p>Verifies that:
      * <ul>
      *   <li>Authenticated users can access the wallet dashboard</li>
-     *   <li>All wallet balances are displayed (ETH, USDC, DAI, XRP, SOL)</li>
+     *   <li>All wallet balances are displayed (ETH, USDC, EURC, XRP, SOL)</li>
      *   <li>Transaction history is properly categorized (sent, received, funding)</li>
      *   <li>User information is passed to the view</li>
      *   <li>Correct view template is rendered</li>
@@ -91,12 +91,12 @@ class WalletControllerTest {
 
         BigDecimal ethBalance = new BigDecimal("1.5");
         BigDecimal usdcBalance = new BigDecimal("500.00");
-        BigDecimal daiBalance = new BigDecimal("250.75");
+        BigDecimal eurcBalance = new BigDecimal("250.75");
         BigDecimal xrpBalance = new BigDecimal("10.0");
         BigDecimal solBalance = new BigDecimal("2.0");
 
         Transaction sentTx = new Transaction(1L, "0xRecipient1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xAbcdef123456", "CONFIRMED");
-        Transaction receivedTx = new Transaction(2L, "0xWallet123", BigDecimal.ONE, "DAI", "ETHEREUM", "0x9876543210ab", "PENDING");
+        Transaction receivedTx = new Transaction(2L, "0xWallet123", BigDecimal.ONE, "EURC", "ETHEREUM", "0x9876543210ab", "PENDING");
         Transaction fundingTx = new Transaction(1L, "0xWallet123", new BigDecimal("10"), "ETH", "ETHEREUM", "0xFedcba098765", "CONFIRMED");
         fundingTx.setType("FUNDING");
 
@@ -117,7 +117,7 @@ class WalletControllerTest {
         when(authService.getCurrentUser(session)).thenReturn(user);
         when(walletService.getEthBalance(anyString())).thenReturn(ethBalance);
         when(transactionService.getTokenBalance(anyString(), ArgumentMatchers.eq("USDC"))).thenReturn(usdcBalance);
-        when(transactionService.getTokenBalance(anyString(), ArgumentMatchers.eq("DAI"))).thenReturn(daiBalance);
+        when(transactionService.getTokenBalance(anyString(), ArgumentMatchers.eq("EURC"))).thenReturn(eurcBalance);
         when(walletService.getXrpBalance(anyString())).thenReturn(xrpBalance);
         when(walletService.getSolanaBalance(anyString())).thenReturn(solBalance);
         when(transactionService.getAllUserTransactions(user)).thenReturn(allTransactions);
@@ -130,7 +130,7 @@ class WalletControllerTest {
             .andExpect(model().attribute("user", user))
             .andExpect(model().attribute("ethBalance", ethBalance))
             .andExpect(model().attribute("usdcBalance", usdcBalance))
-            .andExpect(model().attribute("daiBalance", daiBalance))
+            .andExpect(model().attribute("eurcBalance", eurcBalance))
             .andExpect(model().attribute("xrpBalance", xrpBalance))
             .andExpect(model().attribute("solBalance", solBalance))
             .andExpect(model().attribute("sentTransactions", sentTransactions))
@@ -227,7 +227,7 @@ class WalletControllerTest {
 
         Map<String, String> txHashes = Map.of(
             "usdc", "0xabc123456789",
-            "dai", "0xdef987654321"
+            "eurc", "0xdef987654321"
         );
 
         when(authService.isAuthenticated(session)).thenReturn(true);

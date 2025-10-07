@@ -18,7 +18,9 @@
       "Bash(cat:*)",
       "Bash(./gradlew:*)",
       "Bash(xargs cat:*)",
-      "Bash(javadoc:*)"
+      "Bash(javadoc:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

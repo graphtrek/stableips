@@ -55,7 +55,7 @@ class WalletServiceTest {
         ReflectionTestUtils.setField(walletService, "fundingPrivateKey", "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef");
         ReflectionTestUtils.setField(walletService, "initialAmount", new BigDecimal("10"));
         ReflectionTestUtils.setField(walletService, "initialUsdcAmount", new BigDecimal("1000"));
-        ReflectionTestUtils.setField(walletService, "initialDaiAmount", new BigDecimal("1000"));
+        ReflectionTestUtils.setField(walletService, "initialEurcAmount", new BigDecimal("1000"));
     }
 
     @Test
@@ -218,7 +218,7 @@ class WalletServiceTest {
         // Given
         String walletAddress = "0xUserWallet456";
         String usdcTxHash = "0xUsdcMintTx123";
-        String daiTxHash = "0xDaiMintTx456";
+        String eurcTxHash = "0xEurcMintTx456";
 
         User user = new User("testuser", walletAddress);
         user.setId(1L);
@@ -226,8 +226,8 @@ class WalletServiceTest {
         when(userRepository.findByWalletAddress(walletAddress)).thenReturn(java.util.Optional.of(user));
         when(contractService.mintTestTokens(any(), eq(walletAddress), any(), eq("TEST-USDC")))
             .thenReturn(usdcTxHash);
-        when(contractService.mintTestTokens(any(), eq(walletAddress), any(), eq("TEST-DAI")))
-            .thenReturn(daiTxHash);
+        when(contractService.mintTestTokens(any(), eq(walletAddress), any(), eq("TEST-EURC")))
+            .thenReturn(eurcTxHash);
 
         // When
         java.util.Map<String, String> txHashes = walletService.fundTestTokens(walletAddress);
@@ -235,7 +235,7 @@ class WalletServiceTest {
         // Then
         assertThat(txHashes).hasSize(2);
         assertThat(txHashes.get("usdc")).isEqualTo(usdcTxHash);
-        assertThat(txHashes.get("dai")).isEqualTo(daiTxHash);
+        assertThat(txHashes.get("eurc")).isEqualTo(eurcTxHash);
         verify(contractService, times(2)).mintTestTokens(any(), eq(walletAddress), any(), anyString());
         verify(transactionService, times(2)).recordFundingTransaction(any(), any(), any(), any(), any(), any(), any());
     }

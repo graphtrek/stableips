@@ -85,7 +85,7 @@ class FundingTransactionIntegrationTest {
         // Given
         User user = walletService.createUserWithWallet("bob");
 
-        // When - Record all funding transactions (ETH, USDC, DAI)
+        // When - Record all funding transactions (ETH, USDC, EURC)
         Transaction ethFunding = transactionService.recordFundingTransaction(
             user.getId(),
             user.getWalletAddress(),
@@ -106,13 +106,13 @@ class FundingTransactionIntegrationTest {
             "MINTING"
         );
 
-        Transaction daiMinting = transactionService.recordFundingTransaction(
+        Transaction eurcMinting = transactionService.recordFundingTransaction(
             user.getId(),
             user.getWalletAddress(),
             new BigDecimal("1000"),
-            "TEST-DAI",
+            "TEST-EURC",
             "ETHEREUM",
-            "0xDaiMint",
+            "0xEurcMint",
             "MINTING"
         );
 
@@ -120,7 +120,7 @@ class FundingTransactionIntegrationTest {
         List<Transaction> allTransactions = transactionService.getUserTransactions(user.getId());
         assertThat(allTransactions).hasSize(3);
         assertThat(allTransactions).extracting(Transaction::getToken)
-            .containsExactlyInAnyOrder("ETH", "TEST-USDC", "TEST-DAI");
+            .containsExactlyInAnyOrder("ETH", "TEST-USDC", "TEST-EURC");
     }
 
     @Test

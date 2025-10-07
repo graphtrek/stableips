@@ -1,0 +1,68 @@
+> Task :generateJte UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :processResources
+> Task :classes
+> Task :resolveMainClassName
+
+> Task :bootRun
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2025-10-07T16:01:45.616+02:00  INFO 92730 --- [stableips] [           main] co.grtk.stableips.StableipsApplication   : Starting StableipsApplication using Java 21.0.1 with PID 92730 (/Users/Imre/IdeaProjects/grtk/stableips/build/classes/java/main started by Imre in /Users/Imre/IdeaProjects/grtk/stableips)
+2025-10-07T16:01:45.617+02:00 DEBUG 92730 --- [stableips] [           main] co.grtk.stableips.StableipsApplication   : Running with Spring Boot v3.5.6, Spring v6.2.11
+2025-10-07T16:01:45.617+02:00  INFO 92730 --- [stableips] [           main] co.grtk.stableips.StableipsApplication   : No active profile set, falling back to 1 default profile: "default"
+2025-10-07T16:01:45.950+02:00  INFO 92730 --- [stableips] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-10-07T16:01:45.982+02:00  INFO 92730 --- [stableips] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 26 ms. Found 2 JPA repository interfaces.
+2025-10-07T16:01:46.266+02:00  INFO 92730 --- [stableips] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-10-07T16:01:46.276+02:00  INFO 92730 --- [stableips] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-10-07T16:01:46.276+02:00  INFO 92730 --- [stableips] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-10-07T16:01:46.309+02:00  INFO 92730 --- [stableips] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-10-07T16:01:46.310+02:00  INFO 92730 --- [stableips] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 668 ms
+2025-10-07T16:01:46.405+02:00  INFO 92730 --- [stableips] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-10-07T16:01:46.434+02:00  INFO 92730 --- [stableips] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-10-07T16:01:46.451+02:00  INFO 92730 --- [stableips] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-10-07T16:01:46.600+02:00  INFO 92730 --- [stableips] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-10-07T16:01:46.614+02:00  INFO 92730 --- [stableips] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-10-07T16:01:47.040+02:00  INFO 92730 --- [stableips] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@76ffc17c
+2025-10-07T16:01:47.041+02:00  INFO 92730 --- [stableips] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-10-07T16:01:47.284+02:00  INFO 92730 --- [stableips] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 15.13
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-10-07T16:01:47.683+02:00  INFO 92730 --- [stableips] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-10-07T16:01:47.836+02:00  INFO 92730 --- [stableips] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-10-07T16:01:48.488+02:00  INFO 92730 --- [stableips] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-10-07T16:01:48.494+02:00  INFO 92730 --- [stableips] [           main] co.grtk.stableips.StableipsApplication   : Started StableipsApplication in 3.107 seconds (process running for 3.319)
+2025-10-07T16:01:48.643+02:00  INFO 92730 --- [stableips] [           main] c.grtk.stableips.config.DataInitializer  : Default user 'stableips1' already exists
+2025-10-07T16:01:48.677+02:00  INFO 92730 --- [stableips] [           main] c.grtk.stableips.config.DataInitializer  : Default user 'stableips2' already exists
+2025-10-07T16:01:58.625+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Starting transaction monitoring cycle
+2025-10-07T16:01:58.675+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : No pending transactions to monitor
+2025-10-07T16:01:58.675+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Scanning for external incoming transactions
+2025-10-07T16:02:09.177+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Transaction monitoring cycle completed
+2025-10-07T16:02:39.291+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Starting transaction monitoring cycle
+2025-10-07T16:02:39.334+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : No pending transactions to monitor
+2025-10-07T16:02:39.334+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Scanning for external incoming transactions
+2025-10-07T16:02:49.233+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Transaction monitoring cycle completed
+2025-10-07T16:03:19.306+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Starting transaction monitoring cycle
+2025-10-07T16:03:19.354+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : No pending transactions to monitor
+2025-10-07T16:03:19.354+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Scanning for external incoming transactions
+2025-10-07T16:03:30.580+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Transaction monitoring cycle completed
+2025-10-07T16:04:00.662+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Starting transaction monitoring cycle
+2025-10-07T16:04:00.715+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : No pending transactions to monitor
+2025-10-07T16:04:00.715+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Scanning for external incoming transactions
+2025-10-07T16:04:11.013+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Transaction monitoring cycle completed
+2025-10-07T16:04:41.097+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Starting transaction monitoring cycle
+2025-10-07T16:04:41.134+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : No pending transactions to monitor
+2025-10-07T16:04:41.134+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Scanning for external incoming transactions
+2025-10-07T16:04:53.084+02:00 DEBUG 92730 --- [stableips] [   scheduling-1] c.g.s.s.TransactionMonitoringService     : Transaction monitoring cycle completed

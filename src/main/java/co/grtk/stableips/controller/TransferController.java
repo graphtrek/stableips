@@ -70,7 +70,7 @@ public class TransferController {
      *
      * @param recipient the recipient wallet address
      * @param amount the amount to transfer
-     * @param token the token type (USDC, DAI, ETH, XRP, SOL)
+     * @param token the token type (USDC, EURC, ETH, XRP, SOL)
      * @param network the blockchain network (optional, inferred from token)
      * @param session the HTTP session containing user authentication
      * @param model Spring MVC model for passing data to the view

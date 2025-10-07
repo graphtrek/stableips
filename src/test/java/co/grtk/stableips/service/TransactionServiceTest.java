@@ -106,7 +106,7 @@ class TransactionServiceTest {
         // Given
         Long userId = 1L;
         Transaction tx1 = new Transaction(userId, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(userId, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction tx2 = new Transaction(userId, "0xAddr2", BigDecimal.ONE, "EURC", "ETHEREUM", "0xHash2", "PENDING");
 
         when(transactionRepository.findByUserIdOrderByTimestampDesc(userId))
             .thenReturn(Arrays.asList(tx2, tx1));
@@ -446,7 +446,7 @@ class TransactionServiceTest {
             1L, "0xRecipient1", new BigDecimal("50"), "USDC", "ETHEREUM", "0xSent1", "CONFIRMED"
         );
         Transaction sentTx2 = new Transaction(
-            1L, "0xRecipient2", new BigDecimal("25"), "DAI", "ETHEREUM", "0xSent2", "PENDING"
+            1L, "0xRecipient2", new BigDecimal("25"), "EURC", "ETHEREUM", "0xSent2", "PENDING"
         );
 
         // Received transactions
@@ -484,7 +484,7 @@ class TransactionServiceTest {
         oldestTx.setTimestamp(java.time.LocalDateTime.of(2025, 1, 1, 10, 0));
 
         Transaction newestTx = new Transaction(
-            3L, "0xWallet456", new BigDecimal("20"), "DAI", "ETHEREUM", "0xNewest", "CONFIRMED"
+            3L, "0xWallet456", new BigDecimal("20"), "EURC", "ETHEREUM", "0xNewest", "CONFIRMED"
         );
         newestTx.setTimestamp(java.time.LocalDateTime.of(2025, 1, 3, 10, 0));
         newestTx.setType("TRANSFER");

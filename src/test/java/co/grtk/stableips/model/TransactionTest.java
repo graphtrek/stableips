@@ -35,7 +35,7 @@ class TransactionTest {
     @Test
     void shouldGenerateIdWhenPersisted() {
         // Given
-        Transaction transaction = new Transaction(1L, "0x123", BigDecimal.TEN, "DAI", "ETHEREUM", "0xhash", "CONFIRMED");
+        Transaction transaction = new Transaction(1L, "0x123", BigDecimal.TEN, "EURC", "ETHEREUM", "0xhash", "CONFIRMED");
 
         // When
         transaction.setId(100L);
@@ -61,7 +61,7 @@ class TransactionTest {
     @Test
     void shouldUpdateStatus() {
         // Given
-        Transaction transaction = new Transaction(1L, "0x789", BigDecimal.ONE, "DAI", "ETHEREUM", "0xhash3", "PENDING");
+        Transaction transaction = new Transaction(1L, "0x789", BigDecimal.ONE, "EURC", "ETHEREUM", "0xhash3", "PENDING");
 
         // When
         transaction.setStatus("CONFIRMED");
@@ -74,10 +74,10 @@ class TransactionTest {
     void shouldSupportDifferentTokenTypes() {
         // Given & When
         Transaction usdcTx = new Transaction(1L, "0xA", BigDecimal.TEN, "USDC", "ETHEREUM", "0x1", "PENDING");
-        Transaction daiTx = new Transaction(1L, "0xB", BigDecimal.TEN, "DAI", "ETHEREUM", "0x2", "CONFIRMED");
+        Transaction eurcTx = new Transaction(1L, "0xB", BigDecimal.TEN, "EURC", "ETHEREUM", "0x2", "CONFIRMED");
 
         // Then
         assertThat(usdcTx.getToken()).isEqualTo("USDC");
-        assertThat(daiTx.getToken()).isEqualTo("DAI");
+        assertThat(eurcTx.getToken()).isEqualTo("EURC");
     }
 }

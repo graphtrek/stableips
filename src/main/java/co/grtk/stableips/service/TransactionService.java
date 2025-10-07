@@ -32,7 +32,7 @@ import java.util.Map;
  *
  * <p>Supported networks:
  * <ul>
- *   <li>ETHEREUM: ETH, USDC, DAI, TEST-USDC, TEST-DAI</li>
+ *   <li>ETHEREUM: ETH, USDC, EURC, TEST-USDC, TEST-EURC</li>
  *   <li>XRP: Native XRP transfers</li>
  *   <li>SOLANA: SOL transfers</li>
  * </ul>
@@ -80,20 +80,20 @@ public class TransactionService {
      *
      * <p>This method routes the transfer to the appropriate blockchain service based on
      * the token type. It supports Solana (SOL), XRP Ledger (XRP), and Ethereum-based
-     * tokens (ETH, USDC, DAI). The transaction is logged with PENDING status and saved
+     * tokens (ETH, USDC, EURC). The transaction is logged with PENDING status and saved
      * to the database for tracking.</p>
      *
      * <p>Transfer routing:
      * <ul>
      *   <li>SOL: Routed to {@link SolanaWalletService}</li>
      *   <li>XRP: Routed to {@link XrpWalletService}</li>
-     *   <li>ETH, USDC, DAI: Routed to {@link ContractService}</li>
+     *   <li>ETH, USDC, EURC: Routed to {@link ContractService}</li>
      * </ul>
      *
      * @param user the authenticated user initiating the transfer
      * @param recipient the destination wallet address (format varies by blockchain)
      * @param amount the transfer amount in token units (e.g., 100.50 USDC)
-     * @param token the token symbol (SOL, XRP, ETH, USDC, DAI)
+     * @param token the token symbol (SOL, XRP, ETH, USDC, EURC)
      * @return the persisted Transaction entity with PENDING status and transaction hash
      * @throws RuntimeException if the blockchain transfer fails or credentials are invalid
      * @throws IllegalArgumentException if the token type is unsupported
@@ -332,11 +332,11 @@ public class TransactionService {
      * Retrieves the token balance for a specific ERC-20 token at a wallet address.
      *
      * <p>This method queries the blockchain to get the current balance of an ERC-20
-     * token (USDC, DAI) at the specified Ethereum wallet address. For ETH balance,
+     * token (USDC, EURC) at the specified Ethereum wallet address. For ETH balance,
      * use {@link WalletService#getEthBalance(String)} instead.</p>
      *
      * @param walletAddress the Ethereum wallet address to check
-     * @param token the token symbol (USDC, DAI)
+     * @param token the token symbol (USDC, EURC)
      * @return the token balance in token units (e.g., 100.50 USDC)
      */
     public BigDecimal getTokenBalance(String walletAddress, String token) {
@@ -353,7 +353,7 @@ public class TransactionService {
      * <p>Funding types:
      * <ul>
      *   <li>FUNDING: ETH sent from system funding wallet</li>
-     *   <li>MINTING: Test tokens (TEST-USDC, TEST-DAI) minted to user wallet</li>
+     *   <li>MINTING: Test tokens (TEST-USDC, TEST-EURC) minted to user wallet</li>
      *   <li>FAUCET_FUNDING: XRP received from testnet faucet</li>
      * </ul>
      *
@@ -366,7 +366,7 @@ public class TransactionService {
      * @param userId the ID of the user receiving the funding
      * @param recipientAddress the wallet address receiving the funds
      * @param amount the funding amount in token units
-     * @param token the token type (ETH, XRP, SOL, TEST-USDC, TEST-DAI)
+     * @param token the token type (ETH, XRP, SOL, TEST-USDC, TEST-EURC)
      * @param network the blockchain network (ETHEREUM, XRP, SOLANA)
      * @param txHash the blockchain transaction hash (null if funding failed)
      * @param fundingType the type of funding operation (FUNDING, MINTING, FAUCET_FUNDING)
@@ -412,7 +412,7 @@ public class TransactionService {
      * <p>Included transaction types:
      * <ul>
      *   <li>FUNDING: System wallet funding (ETH)</li>
-     *   <li>MINTING: Test token minting (TEST-USDC, TEST-DAI)</li>
+     *   <li>MINTING: Test token minting (TEST-USDC, TEST-EURC)</li>
      *   <li>FAUCET_FUNDING: Faucet funding (XRP, SOL)</li>
      *   <li>EXTERNAL_FUNDING: External funding from faucets or other sources</li>
      * </ul>

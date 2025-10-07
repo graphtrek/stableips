@@ -58,23 +58,23 @@ blockchain:
 
 # ERC20 Token Contracts
 contract:
-  # Standard USDC/DAI contracts on Sepolia testnet
+  # Standard USDC/EURC contracts on Sepolia testnet
   # Note: Sepolia USDC may use 18 decimals instead of the standard 6 decimals
   usdc:
     address: ${USDC_CONTRACT_ADDRESS:0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238}
-  dai:
-    address: ${DAI_CONTRACT_ADDRESS:0x3e622317f8C93f7328350cF0B56d9eD4C620C5d6}
+  eurc:
+    address: ${EURC_CONTRACT_ADDRESS:0xc339141906318E29c6D11f0F352097cfe967e7EE}
   # Custom test token contracts (deploy using scripts/deploy-test-tokens.sh)
   test-usdc:
     address: ${TEST_USDC_ADDRESS:}
-  test-dai:
-    address: ${TEST_DAI_ADDRESS:}
+  test-eurc:
+    address: ${TEST_EURC_ADDRESS:}
 
 # Initial token amounts for new users (in token units, not smallest denomination)
 token:
   funding:
     initial-usdc: 1000
-    initial-dai: 1000
+    initial-eurc: 1000
 
 # Solana Configuration (Devnet)
 solana:
@@ -88,7 +88,10 @@ solana:
 # Logging Configuration
 logging:
   level:
-    co.grtk.stableips: INFO
+    co.grtk.stableips: DEBUG
+    co.grtk.stableips.service.WalletService: DEBUG
+    co.grtk.stableips.service.ContractService: DEBUG
+    co.grtk.stableips.controller.WalletController: DEBUG
   requests:
-    enabled: false  # Set to true to enable detailed request logging for debugging
+    enabled: true  # Set to true to enable detailed request logging for debugging
 

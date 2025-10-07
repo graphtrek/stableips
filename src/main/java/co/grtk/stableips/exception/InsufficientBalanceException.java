@@ -23,7 +23,7 @@ public class InsufficientBalanceException extends RuntimeException {
      * @param message the detail message
      * @param available the available balance
      * @param required the required balance
-     * @param asset the asset type (e.g., "ETH", "USDC", "DAI")
+     * @param asset the asset type (e.g., "ETH", "USDC", "EURC")
      */
     public InsufficientBalanceException(String message, BigDecimal available, BigDecimal required, String asset) {
         super(message);

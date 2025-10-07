@@ -109,7 +109,7 @@ class TransferValidationServiceTest {
     @Test
     void shouldValidateSupportedTokens() {
         assertThatCode(() -> validationService.validateToken("USDC")).doesNotThrowAnyException();
-        assertThatCode(() -> validationService.validateToken("DAI")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateToken("EURC")).doesNotThrowAnyException();
         assertThatCode(() -> validationService.validateToken("ETH")).doesNotThrowAnyException();
         assertThatCode(() -> validationService.validateToken("XRP")).doesNotThrowAnyException();
         assertThatCode(() -> validationService.validateToken("SOL")).doesNotThrowAnyException();
@@ -118,7 +118,7 @@ class TransferValidationServiceTest {
     @Test
     void shouldValidateTokensCaseInsensitive() {
         assertThatCode(() -> validationService.validateToken("usdc")).doesNotThrowAnyException();
-        assertThatCode(() -> validationService.validateToken("Dai")).doesNotThrowAnyException();
+        assertThatCode(() -> validationService.validateToken("Eurc")).doesNotThrowAnyException();
         assertThatCode(() -> validationService.validateToken("eTh")).doesNotThrowAnyException();
     }
 

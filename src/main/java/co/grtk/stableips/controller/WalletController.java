@@ -31,7 +31,7 @@ import java.util.Map;
  *   <li>Multi-blockchain wallet dashboard with real-time balances</li>
  *   <li>Transaction history display (sent, received, funding)</li>
  *   <li>XRP wallet regeneration for legacy data migration</li>
- *   <li>Test token funding (USDC, DAI) for development/testing</li>
+ *   <li>Test token funding (USDC, EURC) for development/testing</li>
  * </ul>
  *
  * <p>All endpoints require user authentication via session.</p>
@@ -77,7 +77,7 @@ public class WalletController {
      *
      * <ul>
      *   <li>Wallet addresses for Ethereum, XRP Ledger, and Solana</li>
-     *   <li>Current balances for ETH, USDC, DAI, XRP, and SOL (real-time blockchain queries)</li>
+     *   <li>Current balances for ETH, USDC, EURC, XRP, and SOL (real-time blockchain queries)</li>
      *   <li>Complete transaction history including sent, received, and funding transactions</li>
      * </ul>
      *
@@ -111,7 +111,7 @@ public class WalletController {
 
         BigDecimal ethBalance = walletService.getEthBalance(walletAddress);
         BigDecimal usdcBalance = transactionService.getTokenBalance(walletAddress, "USDC");
-        BigDecimal daiBalance = transactionService.getTokenBalance(walletAddress, "DAI");
+        BigDecimal eurcBalance = transactionService.getTokenBalance(walletAddress, "EURC");
         BigDecimal xrpBalance = walletService.getXrpBalance(xrpAddress);
         BigDecimal solBalance = walletService.getSolanaBalance(solanaPublicKey);
 
@@ -132,7 +132,7 @@ public class WalletController {
         model.addAttribute("user", user);
         model.addAttribute("ethBalance", ethBalance);
         model.addAttribute("usdcBalance", usdcBalance);
-        model.addAttribute("daiBalance", daiBalance);
+        model.addAttribute("eurcBalance", eurcBalance);
         model.addAttribute("xrpBalance", xrpBalance);
         model.addAttribute("solBalance", solBalance);
         model.addAttribute("allTransactions", completeTransactionHistory);
@@ -201,14 +201,14 @@ public class WalletController {
     /**
      * Funds the user's wallet with test tokens for development and testing.
      *
-     * <p>This endpoint mints test USDC and DAI tokens to the authenticated user's
+     * <p>This endpoint mints test USDC and EURC tokens to the authenticated user's
      * Ethereum wallet. It requires a configured funding wallet with owner privileges
      * on the deployed test token contracts.</p>
      *
      * <p>Funding amounts are configured in application.properties:
      * <ul>
      *   <li>token.funding.initial-usdc (default: 1000 TEST-USDC)</li>
-     *   <li>token.funding.initial-dai (default: 1000 TEST-DAI)</li>
+     *   <li>token.funding.initial-eurc (default: 1000 TEST-EURC)</li>
      * </ul>
      *
      * <p>The minting transactions are logged in the database with type "MINTING"
@@ -233,7 +233,7 @@ public class WalletController {
             return renderTemplate("wallet/fragments/fund-success.jte",
                 Map.of(
                     "usdcTxHash", txHashes.get("usdc"),
-                    "daiTxHash", txHashes.get("dai")
+                    "eurcTxHash", txHashes.get("eurc")
                 ));
         } catch (IllegalStateException e) {
             return renderTemplate("wallet/fragments/fund-config-error.jte",

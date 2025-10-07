@@ -53,7 +53,7 @@ class TransactionRepositoryTest {
     void shouldFindTransactionsByUserId() {
         // Given
         Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "EURC", "ETHEREUM", "0xHash2", "PENDING");
         Transaction tx3 = new Transaction(2L, "0xAddr3", new BigDecimal("50"), "USDC", "ETHEREUM", "0xHash3", "CONFIRMED");
 
         entityManager.persist(tx1);
@@ -98,7 +98,7 @@ class TransactionRepositoryTest {
     void shouldFindTransactionsByUserIdOrderedByTimestampDesc() {
         // Given
         Transaction tx1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "CONFIRMED");
-        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction tx2 = new Transaction(1L, "0xAddr2", BigDecimal.ONE, "EURC", "ETHEREUM", "0xHash2", "PENDING");
 
         entityManager.persist(tx1);
         entityManager.flush();
@@ -124,7 +124,7 @@ class TransactionRepositoryTest {
     void shouldFindTransactionsByStatus() {
         // Given
         Transaction pending1 = new Transaction(1L, "0xAddr1", BigDecimal.TEN, "USDC", "ETHEREUM", "0xHash1", "PENDING");
-        Transaction pending2 = new Transaction(2L, "0xAddr2", BigDecimal.ONE, "DAI", "ETHEREUM", "0xHash2", "PENDING");
+        Transaction pending2 = new Transaction(2L, "0xAddr2", BigDecimal.ONE, "EURC", "ETHEREUM", "0xHash2", "PENDING");
         Transaction confirmed = new Transaction(1L, "0xAddr3", new BigDecimal("50"), "USDC", "ETHEREUM", "0xHash3", "CONFIRMED");
 
         entityManager.persist(pending1);
@@ -219,8 +219,8 @@ class TransactionRepositoryTest {
         // USDC minting
         Transaction usdcMinting = new Transaction(userId, userWallet, new BigDecimal("1000"), "TEST-USDC", "ETHEREUM", "0xUsdcMint", "CONFIRMED");
 
-        // DAI minting
-        Transaction daiMinting = new Transaction(userId, userWallet, new BigDecimal("1000"), "TEST-DAI", "ETHEREUM", "0xDaiMint", "CONFIRMED");
+        // EURC minting
+        Transaction eurcMinting = new Transaction(userId, userWallet, new BigDecimal("1000"), "TEST-EURC", "ETHEREUM", "0xEurcMint", "CONFIRMED");
 
         // User transfer (should not be included in funding)
         Transaction userTransfer = new Transaction(userId, "0xOtherUser", new BigDecimal("50"), "USDC", "ETHEREUM", "0xTransfer", "CONFIRMED");
@@ -228,7 +228,7 @@ class TransactionRepositoryTest {
         entityManager.persist(userTransfer);
         entityManager.persist(ethFunding);
         entityManager.persist(usdcMinting);
-        entityManager.persist(daiMinting);
+        entityManager.persist(eurcMinting);
         entityManager.flush();
 
         // When - Find all transactions received by user's wallet (funding transactions)
@@ -237,7 +237,7 @@ class TransactionRepositoryTest {
         // Then
         assertThat(fundingTxs).hasSize(3);
         assertThat(fundingTxs).extracting(Transaction::getToken)
-            .containsExactlyInAnyOrder("ETH", "TEST-USDC", "TEST-DAI");
+            .containsExactlyInAnyOrder("ETH", "TEST-USDC", "TEST-EURC");
     }
 
     @Test

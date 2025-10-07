@@ -83,7 +83,7 @@ public class TransferValidationService {
     /**
      * Validates token type.
      *
-     * <p>Ensures the token is one of the supported types: USDC, DAI, ETH, XRP, or SOL.</p>
+     * <p>Ensures the token is one of the supported types: USDC, EURC, ETH, XRP, or SOL.</p>
      *
      * @param token the token type to validate
      * @throws ValidationException if the token type is not supported
@@ -96,7 +96,7 @@ public class TransferValidationService {
 
         String normalizedToken = token.trim().toUpperCase();
         if (!normalizedToken.equals("USDC") &&
-            !normalizedToken.equals("DAI") &&
+            !normalizedToken.equals("EURC") &&
             !normalizedToken.equals("ETH") &&
             !normalizedToken.equals("XRP") &&
             !normalizedToken.equals("SOL")) {

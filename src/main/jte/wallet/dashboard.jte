@@ -7,7 +7,7 @@
 @param User user
 @param BigDecimal ethBalance
 @param BigDecimal usdcBalance
-@param BigDecimal daiBalance
+@param BigDecimal eurcBalance
 @param BigDecimal xrpBalance
 @param BigDecimal solBalance
 @param List<Transaction> allTransactions
@@ -213,9 +213,9 @@
             --card-color-2: #1e5fa5;
         }
 
-        .balance-card-dai {
-            --card-color-1: #f5ac37;
-            --card-color-2: #d69429;
+        .balance-card-eurc {
+            --card-color-1: #0085ff;
+            --card-color-2: #0066cc;
         }
 
         .balance-card-xrp {
@@ -340,6 +340,11 @@
         }
 
         .action-btn-quinary {
+            background: linear-gradient(135deg, #0085ff 0%, #0066cc 100%);
+            color: white;
+        }
+
+        .action-btn-eurc {
             background: linear-gradient(135deg, #0085ff 0%, #0066cc 100%);
             color: white;
         }
@@ -789,16 +794,16 @@
                     <div class="balance-symbol">USDC</div>
                 </div>
 
-                <div class="balance-card balance-card-dai">
+                <div class="balance-card balance-card-eurc">
                     <div class="balance-header">
-                        <div class="balance-icon">◈</div>
+                        <div class="balance-icon">€</div>
                         <div class="balance-info">
-                            <h4>Dai Stablecoin</h4>
+                            <h4>Euro Coin</h4>
                             <div class="balance-network">Sepolia Testnet</div>
                         </div>
                     </div>
-                    <div class="balance-amount">${daiBalance}</div>
-                    <div class="balance-symbol">DAI</div>
+                    <div class="balance-amount">${eurcBalance}</div>
+                    <div class="balance-symbol">EURC</div>
                 </div>
 
                 <div class="balance-card balance-card-xrp">
@@ -842,6 +847,11 @@
                     💵 Fund USDC
                 </button>
                 <button
+                    onclick="window.open('https://faucet.circle.com/', '_blank')"
+                    class="action-btn action-btn-eurc">
+                    € Fund EURC
+                </button>
+                <button
                     onclick="window.open('https://faucet.solana.com/', '_blank')"
                     class="action-btn action-btn-quaternary">
                     ☀️ Fund SOL
@@ -875,7 +885,7 @@
                             <option value="SOL">SOL (Solana)</option>
                             <option value="XRP">XRP (XRP Ledger)</option>
                             <option value="USDC">USDC (Ethereum)</option>
-                            <option value="DAI">DAI (Ethereum)</option>
+                            <option value="EURC">EURC (Ethereum)</option>
                         </select>
                     </div>
                 </div>
