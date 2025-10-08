@@ -1,0 +1,34 @@
+# Build output
+build/
+target/
+*.class
+
+# Gradle
+.gradle/
+gradle-cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Test files
+src/test/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
