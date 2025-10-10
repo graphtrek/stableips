@@ -2,6 +2,7 @@ package co.grtk.stableips.controller;
 
 import co.grtk.stableips.model.Transaction;
 import co.grtk.stableips.model.User;
+import co.grtk.stableips.model.dto.UserDto;
 import co.grtk.stableips.service.AuthService;
 import co.grtk.stableips.service.TransactionService;
 import co.grtk.stableips.service.WalletService;
@@ -266,4 +267,48 @@ public class WalletController {
     private String renderTemplate(String templatePath) {
         return renderTemplate(templatePath, Map.of());
     }
+
+    /**
+     * Retrieves all users except the current authenticated user for recipient selection (HTML fragment).
+     *
+     * <p>This endpoint is designed for HTMX-powered transfer forms where users need to
+     * select a recipient from a dropdown. It returns an HTML fragment containing
+     * &lt;option&gt; elements for a &lt;select&gt; dropdown.</p>
+     *
+     * <p>The returned user list:</p>
+     * <ul>
+     *   <li>Excludes the current authenticated user (prevents self-transfers)</li>
+     *   <li>Is sorted alphabetically by username</li>
+     *   <li>Contains only safe, displayable user information (no private keys)</li>
+     *   <li>Includes username and wallet address for each user</li>
+     * </ul>
+     *
+     * <p>Example response format:</p>
+     * <pre>
+     * &lt;option value="0x123...abc"&gt;alice (0x123...abc)&lt;/option&gt;
+     * &lt;option value="0x456...def"&gt;bob (0x456...def)&lt;/option&gt;
+     * </pre>
+     *
+     * <p>Requires authentication. Unauthenticated users will receive an error fragment.</p>
+     *
+     * @param session the HTTP session containing user authentication state
+     * @return HTML fragment with &lt;option&gt; elements for recipient dropdown (HTMX response)
+     */
+    @GetMapping("/users")
+    @ResponseBody
+    public String getUsersForDropdown(HttpSession session) {
+        if (!authService.isAuthenticated(session)) {
+            return renderTemplate("wallet/fragments/auth-error.jte");
+        }
+
+        try {
+            List<UserDto> users = authService.getAllUsersExceptCurrent(session);
+            return renderTemplate("wallet/fragments/user-dropdown-options.jte",
+                Map.of("users", users));
+        } catch (Exception e) {
+            return renderTemplate("wallet/fragments/user-list-error.jte",
+                Map.of("errorMessage", e.getMessage()));
+        }
+    }
 }
+

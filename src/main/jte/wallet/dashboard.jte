@@ -868,10 +868,23 @@
         <div class="transfer-section">
             <h3>Send Tokens</h3>
             <form method="post" action="/transfer" class="transfer-form">
-                <div class="form-group">
-                    <label for="recipient">Recipient Address</label>
-                    <input type="text" id="recipient" name="recipient" placeholder="0x... or wallet address" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="user-select">Select User (Optional)</label>
+                        <select id="user-select" class="user-select" aria-label="Select recipient user">
+                            <option value="">-- Select a user or enter address manually --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="recipient">Recipient Address</label>
+                        <input type="text" id="recipient" name="recipient" placeholder="0x... or wallet address" required aria-describedby="recipient-help">
+                    </div>
                 </div>
+
+                <small id="recipient-help" style="color: #6c757d; font-size: 0.85rem; margin-bottom: 10px; display: block;">
+                    Select a user from the dropdown above or enter an address manually
+                </small>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -1262,6 +1275,98 @@
             // Show selected tab
             document.getElementById('tab-' + tabName).classList.add('active');
             event.target.classList.add('active');
+        }
+
+        // Load users for the dropdown on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+            setupUserSelection();
+        });
+
+        // Fetch users from backend and populate the dropdown
+        function loadUsers() {
+            fetch('/api/users')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch users');
+                    }
+                    return response.json();
+                })
+                .then(users => {
+                    const userSelect = document.getElementById('user-select');
+
+                    // Clear existing options except the first placeholder
+                    while (userSelect.options.length > 1) {
+                        userSelect.remove(1);
+                    }
+
+                    // Add user options
+                    users.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({
+                            username: user.username,
+                            walletAddress: user.walletAddress,
+                            xrpAddress: user.xrpAddress,
+                            solanaPublicKey: user.solanaPublicKey
+                        });
+                        option.textContent = user.username + ' (' + truncateAddress(user.walletAddress) + ')';
+                        userSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading users:', error);
+                    // Silently fail - user can still enter address manually
+                });
+        }
+
+        // Truncate wallet address for display
+        function truncateAddress(address) {
+            if (!address || address.length <= 10) return address;
+            return address.substring(0, 6) + '...' + address.substring(address.length - 4);
+        }
+
+        // Setup user selection handler
+        function setupUserSelection() {
+            const userSelect = document.getElementById('user-select');
+            const recipientInput = document.getElementById('recipient');
+            const tokenSelect = document.getElementById('token');
+
+            userSelect.addEventListener('change', function() {
+                if (this.value) {
+                    const userData = JSON.parse(this.value);
+                    const selectedToken = tokenSelect.value;
+
+                    // Set the appropriate address based on selected token
+                    if (selectedToken === 'SOL') {
+                        recipientInput.value = userData.solanaPublicKey || '';
+                    } else if (selectedToken === 'XRP') {
+                        recipientInput.value = userData.xrpAddress || '';
+                    } else {
+                        // USDC and EURC use Ethereum address
+                        recipientInput.value = userData.walletAddress || '';
+                    }
+                } else {
+                    // Clear recipient if no user selected
+                    recipientInput.value = '';
+                }
+            });
+
+            // Update recipient address when token changes and a user is selected
+            tokenSelect.addEventListener('change', function() {
+                const selectedUserValue = userSelect.value;
+                if (selectedUserValue) {
+                    const userData = JSON.parse(selectedUserValue);
+                    const selectedToken = this.value;
+
+                    if (selectedToken === 'SOL') {
+                        recipientInput.value = userData.solanaPublicKey || '';
+                    } else if (selectedToken === 'XRP') {
+                        recipientInput.value = userData.xrpAddress || '';
+                    } else {
+                        recipientInput.value = userData.walletAddress || '';
+                    }
+                }
+            });
         }
     </script>
 </body>
